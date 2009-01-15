@@ -30,7 +30,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 	def SetStep(self, step):
 		self.step = step
 		if step >= len(steps):
-			self.SetPage(stepfinal)
+			self.SetPage(stepfinal % config.outputdir)
 			return
 		self.SetPage(steps[step])
 		if step == 0:
@@ -115,7 +115,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			print config.tminz
 			print config.tmaxz
 		elif step == 4:
-			config.outputdir = self.FindWindowByName('outputdir').GetPath()
+			config.outputdir = self.FindWindowByName('outputdir').GetPath().encode('utf8')
 			config.url = self.FindWindowByName('url').GetValue()
 			if config.url == 'http://':
 				config.url = ''
@@ -362,10 +362,15 @@ Thank you for using this software. Now you can see the results. If you upload th
 <p>
 <font color="#DC5309" size="large"><b>Available results:</b></font>
 <p>
+The generated tiles and also the viewers are available in this directory:
+<p>
+<b>%s</b>
+<!--
 <ul>
 <li>Open the <a href="">Google Maps presentation</a> 
 <li>Open the <a href="">OpenLayers presentation</a>
 </ul>
+-->
 <p>&nbsp;
 <p>&nbsp;
 <p>

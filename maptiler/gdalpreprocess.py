@@ -59,9 +59,9 @@ def singlefile(filename, bbox = None):
 	if in_ds.GetRasterBand(1).GetRasterColorTable() and bands==1:
 		# Expand rasters with palette into RGBA
 		if bbox:
-			preprocess.Preprocess(['preprocess.py','-o',vrtfilename,realfilename+'::'+":".join(map(str,bbox))])
+			preprocess.Preprocess(['','-o',vrtfilename,realfilename+'::'+":".join(map(str,bbox))])
 		else:
-			preprocess.Preprocess(['preprocess.py','-o',vrtfilename,realfilename])
+			preprocess.Preprocess(['','-o',vrtfilename,realfilename])
 		realfilename = vrtfilename
 	# Did we added an new geotransform?
 	elif bbox:

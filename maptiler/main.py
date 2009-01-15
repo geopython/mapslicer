@@ -231,7 +231,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			if len(config.files) == 0:
 				wx.MessageBox("""You have to add some files for rendering""", "No files specified", wx.ICON_ERROR)
 				return
-			if config.files[0][1] == '':
+			if config.files[0][1] == '' and config.profile != 'raster':
 				wx.MessageBox("""Sorry the file you have specified does not have georeference.\n\nClick on the 'Georeference' button and give a bounding box or \ncreate a world file (.wld) for the specified file.""", "Missing georeference", wx.ICON_ERROR)
 				return
 		if step == 2:
@@ -279,11 +279,10 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		self.jobID += 1
 		
 		params = self.createParams()
-		#print "-"*20
-		#for p in params:
-		#	print type(p), p
-		params = ['--s_srs','EPSG:4326','/Users/klokan/Desktop/fox-denali-alaska-644060-xl.jpg']
-
+		print "-"*20
+		for p in params:
+			print type(p), p
+		#params = ['--s_srs','EPSG:4326','/Users/klokan/Desktop/fox-denali-alaska-644060-xl.jpg']
 		
 		delayedresult.startWorker(self._resultConsumer, self._resultProducer,
 				wargs=(self.jobID,self.abortEvent, params), jobID=self.jobID)

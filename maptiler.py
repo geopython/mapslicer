@@ -39,8 +39,7 @@ if __name__ == "__main__":
 	# for both batch processing and initialization of the GUI
 
 	#wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic",0)
-	#app = MapTilerApp(False)
-	app = MapTilerApp()
+	app = MapTilerApp(False)
 	
 	try:
 		from osgeo import gdal
