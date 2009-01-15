@@ -15,26 +15,7 @@ import widgets
 from config import _
 
 import gdalpreprocess
-from gdal2tiles import GDAL2Tiles
-
-class wxGDAL2Tiles(GDAL2Tiles):
-	
-	def setProgressObject(self, progressobject):
-		self.progressobject = progressobject
-		
-	def error(self, msg, details = "" ):
-		"""Print an error message and stop the processing"""
-		
-		self.stop()
-		wx.MessageBox(msg, _("Rendering Error"), wx.ICON_ERROR)
-		self.progressobject.UpdateRenderText("Rendering Error. Sorry.")
-		self.progressobject.UpdateRenderProgress(-1)
-		
-	# -------------------------------------------------------------------------
-	def progressbar(self, complete = 0.0):
-		"""Print progressbar for float value 0..1"""
-		
-		self.progressobject.UpdateRenderProgress(int(complete*100))
+from wxgdal2tiles import wxGDAL2Tiles
 
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
@@ -245,6 +226,21 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 	def OnContinue(self, event):
 		self.button_back.Enable()
 		step = self.html.GetActiveStep()
+		self.html.SaveStep(step)
+		if step == 1:
+			if len(config.files) == 0:
+				wx.MessageBox("""You have to add some files for rendering""", "No files specified", wx.ICON_ERROR)
+				return
+			if config.files[0][1] == '':
+				wx.MessageBox("""Sorry the file you have specified does not have georeference.\n\nClick on the 'Georeference' button and give a bounding box or \ncreate a world file (.wld) for the specified file.""", "Missing georeference", wx.ICON_ERROR)
+				return
+		if step == 2:
+			srs = gdalpreprocess.SRSInput(config.srsformat, config.srs)
+			if config.profile != 'raster' and not srs:
+				wx.MessageBox("""You have to specify refenrece system of your coordinates.\n\nTIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'""", "Not valid spatial reference system", wx.ICON_ERROR)
+				return
+			else:
+				config.srs = srs
 		if step == 6:
 			self.button_continue.SetLabel(_("&Render"))
 		if step == 7:
@@ -252,7 +248,6 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			self.button_continue.Enable(False)
 			self._renderstart()
 		if step < 7: # maximum is 7
-			self.html.SaveStep(step)
 			self.html.SetStep( step + 1 )
 			self.steplabel[step+1].Enable()
 		if step > 7:
@@ -260,6 +255,8 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			
 	def _add(self, filename):
 
+		filename = filename.encode('utf8')
+		
 		if len(config.files) > 0:
 			wx.MessageBox("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered.""", "MapTiler: Not yet implemented :-(", wx.ICON_ERROR)
 
@@ -280,31 +277,62 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		self.rendering = True
 		self.html.UpdateRenderText("Started...")
 		self.jobID += 1
+		
+		params = self.createParams()
+		#print "-"*20
+		#for p in params:
+		#	print type(p), p
+		params = ['--s_srs','EPSG:4326','/Users/klokan/Desktop/fox-denali-alaska-644060-xl.jpg']
+
+		
 		delayedresult.startWorker(self._resultConsumer, self._resultProducer,
-				wargs=(self.jobID,self.abortEvent), jobID=self.jobID)
+				wargs=(self.jobID,self.abortEvent, params), jobID=self.jobID)
 	
-	def _resultProducer(self, jobID, abortEvent):
-		"""
-		# NOP Test
-		import time
-		count = 0
-		while not abortEvent() and count < 50:
-			time.sleep(0.1)
-			self.html.UpdateRenderProgress(count*2)
-			count += 1
-		return jobID
-		"""
-			
-		#print jobID
-		params = ['/Users/klokan/gdal2tiles/data/NOAA_BSBs494611/first.tif']
-		params = ['first.tif']
+	def createParams(self):
+		
+		config.srs = "EPSG:4326"
+		params = ['--profile',config.profile,
+			'--s_srs',config.srs,
+			'--zoom',"%i-%i" % (config.tminz, config.tmaxz)
+			#'--title',config.title,
+			#'--copyright',config.copyright,
+			]
+		viewer = 'none'
+		if config.google:
+			viewer = 'google'
+		if config.openlayers:
+			viewer = 'openlayers'
+		if config.google and config.openlayers:
+			viewer = 'all'
+		params.extend(['--webviewer',viewer])
+		if config.kml:
+			params.append('--force-kml')
+		
+		if config.url:
+			params.extend(['--url',config.url])
+		if config.googlekey:
+			params.extend(['--googlekey',config.googlekey])
+		if config.yahookey:
+			params.extend(['--yahookey',config.googlekey])
+
+		# And finally the files
+		params.append( config.files[0][2].encode('utf-8') )
+	
+		# and output directory
+		params.append( config.outputdir )
+
+		return params
+
+
+	def _resultProducer(self, jobID, abortEvent, params):
+
+		#params = ['first.tif']
+		#params = ['--s_srs','EPSG:4326','/Users/klokan/Desktop/fox-denali-alaska-644060-xl.jpg']
 		if self.resume and params[0] != '--resume':
 			params.insert(0, '--resume')
-		self.g2t = wxGDAL2Tiles(params)
+		
+		self.g2t = wxGDAL2Tiles( params )
 		self.g2t.setProgressObject( self.html )
-		#g2t.setAbortEvent( abortEvent )
-		#print "Stopped", self.g2t.stopped
-		#print abortEvent()
 
 		self.html.UpdateRenderText("Opening the input files")
 		self.g2t.open_input()

@@ -2,12 +2,17 @@
 # -*- coding: utf-8 -*-
 # TODO: Cleaning the code, refactoring before 1.0 publishing
 
+import os
 import wx
 import wx.html
 import wx.lib.wxpTag
 #import wx.animate
 import webbrowser
 import config
+from wxgdal2tiles import wxGDAL2Tiles
+
+from unicodedata import normalize, combining
+strip_diacritics = lambda text: filter(lambda i: not combining(i), normalize('NFKD', text))
 
 class WizardHtmlWindow(wx.html.HtmlWindow):
 	def __init__(self, parent, id):
@@ -32,35 +37,68 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			self.FindWindowByName('mercator').SetValue(1)
 		elif step == 1:
 			pass
-
-		# self.checkStep()
-		#g1 = self.html.FindWindowByName('g1')
-		#g1.Enable(False)
-		#g1.SetValue(50)
-
-		#g2 = self.html.FindWindowByName('g2')
-		#g2.Pulse()
-		#lc = self.html.FindWindowByName('listctrl')
-		#lc.SetWindowStyleFlag(wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES|wx.LC_SINGLE_SEL) #|wx.LC_AUTOARRANGE) #|wx.SUNKEN_BORDER)
-		#lc.InsertColumn(0, _("Filename"), width=350 ) #wx.LIST_AUTOSIZE)
-		#lc.InsertColumn(1, _("Georeference"), width=115)
-		##print dir(lc)
-		#lc.SetItemCount(5)
-		##lc.InsertColumn(0,"Name")
-		##lc.SetColumnWidth(0, 215)
-		##lc.InsertStringItem(0,"John Smith")
-		##lc.SetStringItem(0,1, "123 Elm")
-		##lc.InsertStringItem(1,"John Smith")
+		elif step == 2:
+			if config.files[0][6] != '':
+				config.srs = config.files[0][6]
+			self.FindWindowByName('srs').SetValue(config.srs)
+		elif step == 3:
+			g2t = wxGDAL2Tiles(['--profile',config.profile,'--s_srs', config.srs, str(config.files[0][2]) ])
+			g2t.open_input()
+			config.tminz = g2t.tminz
+			config.tmaxz = g2t.tmaxz
+			config.kml = g2t.kml
+			del g2t
+			self.FindWindowByName('tminz').SetValue(config.tminz)
+			self.FindWindowByName('tmaxz').SetValue(config.tmaxz)
+		elif step == 4:
+			filename = config.files[0][0]
+			config.outputdir = os.path.join( os.path.dirname(filename),
+			os.path.splitext(os.path.basename( filename ))[0] )
+			self.FindWindowByName('outputdir').SetPath(config.outputdir)
+		elif step == 5:
+			if config.profile=='mercator':
+				self.FindWindowByName('google').Enable(True)
+				self.FindWindowByName('openlayers').Enable(True)
+				self.FindWindowByName('kml').Enable(True)
+			elif config.profile=='geodetic':
+				self.FindWindowByName('google').Enable(False)
+				self.FindWindowByName('openlayers').Enable(True)
+				self.FindWindowByName('kml').Enable(True)
+			elif config.profile=='raster':
+				self.FindWindowByName('google').Enable(False)
+				self.FindWindowByName('openlayers').Enable(True)
+				if not config.kml:
+					self.FindWindowByName('kml').Enable(False)
+				
+			self.FindWindowByName('google').SetValue(config.google)
+			self.FindWindowByName('openlayers').SetValue(config.openlayers)
+			self.FindWindowByName('kml').SetValue(config.kml)
+			
+		elif step == 6:
+			config.title = os.path.basename( config.files[0][0] )
+			self.FindWindowByName('title').SetValue(config.title)
+			self.FindWindowByName('copyright').SetValue(config.copyright)
+			self.FindWindowByName('googlekey').SetValue(config.googlekey)
+			self.FindWindowByName('yahookey').SetValue(config.yahookey)
 		
 	def SaveStep(self, step):
 		if step == 0:
 			# Profile
 			if self.FindWindowByName('mercator').GetValue():
 				config.profile = 'mercator'
+				config.google = True
+				config.openlayers = True
+				config.kml = False
 			elif self.FindWindowByName('geodetic').GetValue():
 				config.profile = 'geodetic'
+				config.google = False
+				config.openlayers = True
+				config.kml = True
 			elif self.FindWindowByName('raster').GetValue():
 				config.profile = 'raster'
+				config.google = False
+				config.openlayers = True
+				config.kml = False
 			print config.profile
 		elif step == 1:
 			# Files + Nodata
@@ -68,15 +106,37 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			config.nodata = self.FindWindowByName('nodatapanel').GetColor()
 			print config.nodata
 		elif step == 2:
-			pass
+			config.srs = str(strip_diacritics(self.FindWindowByName('srs').GetValue()))
+			config.srsformat = self.FindWindowByName('srs').GetSelection()
+			print config.srs
 		elif step == 3:
-			pass
+			config.tminz = int(self.FindWindowByName('tminz').GetValue())
+			config.tmaxz = int(self.FindWindowByName('tmaxz').GetValue())
+			print config.tminz
+			print config.tmaxz
 		elif step == 4:
-			pass
+			config.outputdir = self.FindWindowByName('outputdir').GetPath()
+			config.url = self.FindWindowByName('url').GetValue()
+			if config.url == 'http://':
+				config.url = ''
+			print config.outputdir
+			print config.url
 		elif step == 5:
-			pass
+			config.google = self.FindWindowByName('google').GetValue()
+			config.openlayers = self.FindWindowByName('openlayers').GetValue()
+			config.kml = self.FindWindowByName('kml').GetValue()
+			print config.google
+			print config.openlayers
+			print config.kml
 		elif step == 6:
-			pass
+			config.title = self.FindWindowByName('title').GetValue()
+			config.copyright = self.FindWindowByName('copyright').GetValue()
+			config.googlekey = self.FindWindowByName('googlekey').GetValue()
+			config.yahookey = self.FindWindowByName('yahookey').GetValue()
+			print config.title
+			print config.copyright
+			print config.googlekey
+			print config.yahookey
 	
 	def UpdateRenderProgress(self, complete):
 		if self.step != len(steps) - 1:
@@ -148,6 +208,7 @@ step3 = """<h3>Step 3: Spatial Reference</h3>
 	<font color="#DC5309" size="large"><b>What is the Spatial Reference System used in your files?</b></font>
 	<p>
 	<wxp module="maptiler.widgets" class="SpatialReferencePanel" name="test" height="200" width=100%>
+	<param name="name" value="srs">
 	</wxp>
 	<font size="-1">
 	Note: More info about spatial reference is at <a href="http://help.maptiler.org/coordinates/">http://help.maptiler.org/coordinates/</a>.
@@ -159,8 +220,8 @@ step4 = """<h3>Step 4: Tile Details</h3> <!-- Zoom levels, Tile Format (PNG/JPEG
 	<p>
 	<font color="#DC5309" size="large"><b>Zoom levels to generate:</b></font>
 	<p>
-	Minimal zoom: <wxp module="wx" class="SpinCtrl" name="test"><param name="name" value="zoommin"></wxp> &nbsp;
-	Maximal: <wxp module="wx" class="SpinCtrl" name="test"><param name="name" value="zoommax"></wxp>
+	Minimal zoom: <wxp module="wx" class="SpinCtrl" name="test"><param name="name" value="tminz"></wxp> &nbsp;
+	Maximal: <wxp module="wx" class="SpinCtrl" name="test"><param name="name" value="tmaxz"></wxp>
 	<p>&nbsp;
 	<p>
 	<font size="-1">
@@ -252,7 +313,7 @@ Title of the map:<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="title"></wxp>
 <p>
 Copyright notice:<br/>
-<wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="title"><param name="value" value="&copy; "></wxp>
+<wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="copyright"></wxp>
 <p>
 <font color="#DC5309" size="large"><b>The API keys for online maps API viewers</b></font>
 <p>

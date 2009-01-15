@@ -207,7 +207,6 @@ def Preprocess(argv):
 	a_srs = None
 	a_nodata = None
 
-	argv = gdal.GeneralCmdLineProcessor( argv )
 	if argv is None:
 		sys.exit( 0 )
 
@@ -383,4 +382,5 @@ def Preprocess(argv):
 #
 
 if __name__ == '__main__':
-	Preprocess(sys.argv)
+	argv = gdal.GeneralCmdLineProcessor( sys.argv )
+	Preprocess(argv)

@@ -101,6 +101,7 @@ class FilePanel(wx.Panel):
 		self.SetSizer(mainsizer)
 		self.Bind(wx.EVT_BUTTON, self.onAdd, badd)
 		self.Bind(wx.EVT_BUTTON, self.onDelete, self.bdel)
+		self.Bind(wx.EVT_BUTTON, self.onGeoreference, bgeo)
 
 	def OnItemSelected(self, event):
 		self.bdel.Enable()
@@ -114,6 +115,7 @@ class FilePanel(wx.Panel):
 		if len(config.files) > 0:
 			wx.MessageBox("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered.""", "MapTiler: Not yet implemented :-(", wx.ICON_ERROR)
 		
+		filename = filename.encode('utf8')
 		filerecord = gdalpreprocess.singlefile(filename)
 		if filename:
 			config.files.append(filerecord)
@@ -155,7 +157,34 @@ class FilePanel(wx.Panel):
 		
 	
 	def onGeoreference(self, evt):
-		pass
+		bbox = None
+		dlg = wx.TextEntryDialog(
+				self, "Please specify bounding box for '%s' as 4 numbers\nFormat: 'ulx uly lrx lry' where ulx means upper left x coordinate.\n\nAlternatively you can create a world file (.wld) for this file" % config.files[ self.lc.GetFirstSelected() ][0],
+				'Georeference with bounding box', '-180 90 180 -90')
+
+		#dlg.SetValue("Python is the best!")
+
+		if dlg.ShowModal() == wx.ID_OK:
+			str = dlg.GetValue()
+			str.replace(',','.')
+			print str
+			try:
+				bbox = map(float, str.split())
+				bbox[3] = bbox[3]
+			except:
+				return
+		
+			# Delete the old temporary files
+			if config.files[ self.lc.GetFirstSelected() ][2] != config.files[ self.lc.GetFirstSelected() ][0]:
+				os.unlink(config.files[ self.lc.GetFirstSelected() ][2])
+				
+			filename = config.files[ self.lc.GetFirstSelected() ][0]
+			filerecord = gdalpreprocess.singlefile(filename, bbox)
+			if filename:
+				config.files[self.lc.GetFirstSelected() ] = filerecord
+				self.lc.Refresh(False)
+			
+		dlg.Destroy()
 	
 	def onUp(self, evt):
 		pass
@@ -235,13 +264,25 @@ class SpatialReferencePanel(wx.Panel):
 		self.SetBackgroundColour('#ffffff')
 
 		sizer = wx.BoxSizer(wx.VERTICAL)
-		ch1 = wx.Choice(self, -1, choices = config.srsFormatList)
-		ch1.SetSelection(0)
-		sizer.Add(ch1, 0, wx.EXPAND|wx.ALL, 3)
-		tc1 = wx.TextCtrl(self, -1, "EPSG:4326", style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
-		sizer.Add(tc1, 1, wx.EXPAND|wx.ALL, 3)
+		self.ch1 = wx.Choice(self, -1, choices = config.srsFormatList)
+		self.ch1.SetSelection(0)
+		sizer.Add(self.ch1, 0, wx.EXPAND|wx.ALL, 3)
+		self.tc1 = wx.TextCtrl(self, -1, "EPSG:4326", style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+		sizer.Add(self.tc1, 1, wx.EXPAND|wx.ALL, 3)
 
 		self.SetSizer(sizer)
+		
+	def SetValue(self, value):
+		self.tc1.SetValue(value)
+		
+	def GetValue(self):
+		return self.tc1.GetValue()
+	
+	def SetSelection(self, value):
+		return self.ch1.SetSelection(value)
+		
+	def GetSelection(self):
+		return self.ch1.GetSelection()
 
 class ProgressPanel(wx.Panel):
 

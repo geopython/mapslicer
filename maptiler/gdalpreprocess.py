@@ -10,6 +10,7 @@ gdal.AllRegister()
 vrt_drv = gdal.GetDriverByName( 'VRT' )
 
 palettecolors = ['Red','Green','Blue','Alpha']
+reference = osr.SpatialReference()
 
 def singlefile(filename, bbox = None):
 	"Returns [visible-filename, visible-georeference, realfilename, geotransform, xsize, ysize, srs]"
@@ -19,7 +20,7 @@ def singlefile(filename, bbox = None):
 	geotransform = None
 	srs = ""
 	
-	in_ds = gdal.Open( str(filename), gdal.GA_ReadOnly)
+	in_ds = gdal.Open( filename, gdal.GA_ReadOnly)
 	if not in_ds:
 		# Note: GDAL prints the ERROR message too
 		raise "It is not possible to open the input file '%s'." % filename
@@ -52,13 +53,13 @@ def singlefile(filename, bbox = None):
 	if geotransform != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
 		georeference = " ".join(map(str, geotransform))
 	
-	vrtfilename = tempfile.mktemp(os.path.basename(filename)+'.vrt')
+	vrtfilename = str(tempfile.mktemp(os.path.basename(filename)+'.vrt'))
 
 	# Is it a paletted raster?
 	if in_ds.GetRasterBand(1).GetRasterColorTable() and bands==1:
 		# Expand rasters with palette into RGBA
 		if bbox:
-			preprocess.Preprocess(['preprocess.py','-o',vrtfilename,realfilename+'::'+":".join(bbox)])
+			preprocess.Preprocess(['preprocess.py','-o',vrtfilename,realfilename+'::'+":".join(map(str,bbox))])
 		else:
 			preprocess.Preprocess(['preprocess.py','-o',vrtfilename,realfilename])
 		realfilename = vrtfilename
@@ -68,7 +69,23 @@ def singlefile(filename, bbox = None):
 		vrt_drv.CreateCopy(vrtfilename, in_ds)
 		realfilename = vrtfilename
 	
+	reference.ImportFromWkt(srs)
+	srs = reference.ExportToPrettyWkt()
 	return filename, georeference, realfilename, geotransform, xsize, ysize, srs
+
+def SRSInput(type, srs):
+	# type = 0 - automatic, 1 - WKT, 2 - ESRI WKT, 3 - EPSG, 4 - Proj.4
+	if type == 0:
+		reference.SetFromUserInput(srs)
+	elif type == 1:
+		reference.ImportFromWkt(srs)
+	elif type == 2:
+		reference.ImportFromESRI(srs)
+	elif type == 3:
+		reference.ImportFromEPSG(srs)
+	elif type == 4:
+		reference.ImportFromProj4(srs)
+	return reference.ExportToPrettyWkt()
 	
 if __name__=='__main__':
 	import sys

@@ -620,7 +620,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 			if max:
 				self.tmaxz = int(max)
 			else:
-				self.tmaxz = min 
+				self.tmaxz = int(min) 
 		
 		# KML generation
 		self.kml = self.options.kml
@@ -910,9 +910,10 @@ gdal2tiles temp.vrt""" % self.input )
 		
 		# Test the size of the pixel
 		
-		if self.out_gt[1] != (-1 * self.out_gt[5]) and self.options.profile != 'raster':
+		# MAPTILER - COMMENTED
+		#if self.out_gt[1] != (-1 * self.out_gt[5]) and self.options.profile != 'raster':
 			# TODO: Process corectly coordinates with are have swichted Y axis (display in OpenLayers too)
-			self.error("Size of the pixel in the output differ for X and Y axes.")
+			#self.error("Size of the pixel in the output differ for X and Y axes.")
 			
 		# Report error in case rotation/skew is in geotransform (possible only in 'raster' profile)
 		if (self.out_gt[2], self.out_gt[4]) != (0,0):
