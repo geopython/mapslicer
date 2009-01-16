@@ -271,14 +271,17 @@ def Preprocess(argv):
 	projection = file_infos[0].projection
 	
 	for fi in file_infos:
-		if fi.geotransform[1] != psize_x or fi.geotransform[5] != psize_y:
-			print "All files must have the same scale; %s does not" \
-				% fi.filename
-			sys.exit(1)
-
-		if fi.geotransform[2] != 0 or fi.geotransform[4] != 0:
-			print "No file must be rotated/skewed; %s is.\nTODO: gdalwarp -of vrt %s %s.vrt" % (fi.filename, fi.filename, fi.filename)
-			sys.exit(1)
+		pass
+		# MAPTILER COMMENT
+		#if fi.geotransform[1] != psize_x or fi.geotransform[5] != psize_y:
+		#	print "All files must have the same scale; %s does not" \
+		#		% fi.filename
+		#	sys.exit(1)
+		
+		# MAPTILER COMMENT
+		#if fi.geotransform[2] != 0 or fi.geotransform[4] != 0:
+		#	print "No file must be rotated/skewed; %s is.\nTODO: gdalwarp -of vrt %s %s.vrt" % (fi.filename, fi.filename, fi.filename)
+		#	sys.exit(1)
 			
 		#TODO: During initialization create temporary files by AutoCreateWarpedVRT for those
 
@@ -287,7 +290,9 @@ def Preprocess(argv):
 		#		% fi.filename
 		#	sys.exit(1)
 
-	geotransform = (ulx, psize_x, 0.0, uly, 0.0, psize_y)
+	# MAPTILER COMMENT
+	#geotransform = (ulx, psize_x, 0.0, uly, 0.0, psize_y)
+	geotransform = file_infos[0].geotransform
 	
 	gcpprojection = file_infos[0].gcpprojection
 	gcps = file_infos[0].gcps

@@ -25,7 +25,6 @@ class MainFrame(wx.Frame):
 		self.rendering = False
 		self.resume = False
 		
-		# begin wxGlade: MainFrame.__init__
 		kwds["style"] = wx.DEFAULT_FRAME_STYLE
 		wx.Frame.__init__(self, *args, **kwds)
 		
@@ -92,10 +91,8 @@ class MainFrame(wx.Frame):
 
 		self.__set_properties()
 		self.__do_layout()
-		# end wxGlade
 
 	def __set_properties(self):
-		# begin wxGlade: MainFrame.__set_properties
 		self.SetTitle(_("MapTiler - Map Tile Generator for Mashups"))
 		#self.SetIcon( icons.getIconIcon() )
 		self.SetBackgroundColour(wx.Colour(253, 253, 253))
@@ -110,10 +107,8 @@ class MainFrame(wx.Frame):
 		self.label_9.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
 		self.button_back.Enable(False)
 		self.button_continue.SetDefault()
-		# end wxGlade
 
 	def __do_layout(self):
-		# begin wxGlade: MainFrame.__do_layout
 		sizer_1 = wx.BoxSizer(wx.VERTICAL)
 		sizer_3 = wx.BoxSizer(wx.HORIZONTAL)
 		sizer_5 = wx.BoxSizer(wx.VERTICAL)
@@ -148,7 +143,6 @@ class MainFrame(wx.Frame):
 		self.Layout()
 		self.Centre(wx.BOTH)
 		#self.SetMinSize((700, 500))
-		# end wxGlade
 
 	def OnQuit(self,Event):
 		self.Destroy()
@@ -235,7 +229,12 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 				wx.MessageBox("""Sorry the file you have specified does not have georeference.\n\nClick on the 'Georeference' button and give a bounding box or \ncreate a world file (.wld) for the specified file.""", "Missing georeference", wx.ICON_ERROR)
 				return
 		if step == 2:
-			srs = gdalpreprocess.SRSInput(config.srsformat, config.srs)
+			print config.srs
+			try:
+				srs = gdalpreprocess.SRSInput(config.srsformat, config.srs)
+			except:
+				print "!!! Exception in SRS reading"
+			print srs
 			if config.profile != 'raster' and not srs:
 				wx.MessageBox("""You have to specify refenrece system of your coordinates.\n\nTIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'""", "Not valid spatial reference system", wx.ICON_ERROR)
 				return
@@ -289,12 +288,11 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 	
 	def createParams(self):
 		
-		config.srs = "EPSG:4326"
 		params = ['--profile',config.profile,
 			'--s_srs',config.srs,
-			'--zoom',"%i-%i" % (config.tminz, config.tmaxz)
-			#'--title',config.title,
-			#'--copyright',config.copyright,
+			'--zoom',"%i-%i" % (config.tminz, config.tmaxz),
+			'--title',config.title,
+			'--copyright',config.copyright
 			]
 		viewer = 'none'
 		if config.google:

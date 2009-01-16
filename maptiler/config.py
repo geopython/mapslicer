@@ -1,9 +1,9 @@
-version = "1.0 alpha1"
+version = "1.0 alpha2"
 
 profile = 'mercator'
 files = []
 nodata = None
-srs = "EPSG:4326"
+srs = ""
 srsformat = 0
 tminz = 0
 tmaxz = 0

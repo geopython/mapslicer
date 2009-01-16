@@ -11,8 +11,8 @@ import webbrowser
 import config
 from wxgdal2tiles import wxGDAL2Tiles
 
-from unicodedata import normalize, combining
-strip_diacritics = lambda text: filter(lambda i: not combining(i), normalize('NFKD', text))
+#from unicodedata import normalize, combining
+#strip_diacritics = lambda text: filter(lambda i: not combining(i), normalize('NFKD', text))
 
 class WizardHtmlWindow(wx.html.HtmlWindow):
 	def __init__(self, parent, id):
@@ -30,7 +30,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 	def SetStep(self, step):
 		self.step = step
 		if step >= len(steps):
-			self.SetPage(stepfinal % config.outputdir)
+			self.SetPage(stepfinal % (config.outputdir, config.outputdir) )
 			return
 		self.SetPage(steps[step])
 		if step == 0:
@@ -38,16 +38,21 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 		elif step == 1:
 			pass
 		elif step == 2:
-			if config.files[0][6] != '':
+			if not config.srs:
 				config.srs = config.files[0][6]
+			if config.profile == 'raster' and not config.srs:
+				config.srs = "EPSG:4326"
 			self.FindWindowByName('srs').SetValue(config.srs)
 		elif step == 3:
-			g2t = wxGDAL2Tiles(['--profile',config.profile,'--s_srs', config.srs, str(config.files[0][2]) ])
-			g2t.open_input()
-			config.tminz = g2t.tminz
-			config.tmaxz = g2t.tmaxz
-			config.kml = g2t.kml
-			del g2t
+			try:
+				g2t = wxGDAL2Tiles(['--profile',config.profile,'--s_srs', config.srs, str(config.files[0][2]) ])
+				g2t.open_input()
+				config.tminz = g2t.tminz
+				config.tmaxz = g2t.tmaxz
+				config.kml = g2t.kml
+				del g2t
+			except:
+				print "!!! Exception: GDAL2Tiles initialization - for getting the default values"
 			self.FindWindowByName('tminz').SetValue(config.tminz)
 			self.FindWindowByName('tmaxz').SetValue(config.tmaxz)
 		elif step == 4:
@@ -106,7 +111,8 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			config.nodata = self.FindWindowByName('nodatapanel').GetColor()
 			print config.nodata
 		elif step == 2:
-			config.srs = str(strip_diacritics(self.FindWindowByName('srs').GetValue()))
+			config.oldsrs = config.srs
+			config.srs = self.FindWindowByName('srs').GetValue().encode('utf-8').strip()
 			config.srsformat = self.FindWindowByName('srs').GetSelection()
 			print config.srs
 		elif step == 3:
@@ -129,10 +135,12 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			print config.openlayers
 			print config.kml
 		elif step == 6:
-			config.title = self.FindWindowByName('title').GetValue()
-			config.copyright = self.FindWindowByName('copyright').GetValue()
-			config.googlekey = self.FindWindowByName('googlekey').GetValue()
-			config.yahookey = self.FindWindowByName('yahookey').GetValue()
+			config.title = self.FindWindowByName('title').GetValue().encode('utf8')
+			if not config.title:
+				config.title = os.path.basename( config.files[0][0] ).encode('utf8')
+			config.copyright = self.FindWindowByName('copyright').GetValue().encode('utf8')
+			config.googlekey = self.FindWindowByName('googlekey').GetValue().encode('utf8')
+			config.yahookey = self.FindWindowByName('yahookey').GetValue().encode('utf8')
 			print config.title
 			print config.copyright
 			print config.googlekey
@@ -362,9 +370,9 @@ Thank you for using this software. Now you can see the results. If you upload th
 <p>
 <font color="#DC5309" size="large"><b>Available results:</b></font>
 <p>
-The generated tiles and also the viewers are available in this directory:
+The generated tiles and also the viewers are available in the output directory:
 <p>
-<b>%s</b>
+<b><a href="file://%s">%s</a></b>
 <!--
 <ul>
 <li>Open the <a href="">Google Maps presentation</a> 
