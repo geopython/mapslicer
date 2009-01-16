@@ -5,15 +5,19 @@
 import os, sys
 
 import wx
-import maptiler
 
-__version__ = maptiler.version
-
-# Under Windows set the GDAL variables to local directories
+# Under Windows set the GDAL variables to local directories in the py2exe distribution
 # Other systems need correctly installed GDAL libraries
+exepath = os.getcwd()
+if hasattr(sys, "frozen"):
+	exepath = os.path.dirname(sys.executable)
+
 if sys.platform in ['win32','win64']:
-	os.environ['GDAL_DATA'] = os.path.join( sys.path[0], "gdaldata" )
-	os.environ['GDAL_DRIVER_PATH'] = os.path.join( sys.path[0], "gdalplugins" )
+	os.environ['GDAL_DATA'] = os.path.join( exepath, "gdaldata" )
+	os.environ['GDAL_DRIVER_PATH'] = os.path.join( exepath, "gdalplugins" )
+
+import maptiler
+__version__ = maptiler.version
 
 class MapTilerApp(wx.App):
 	
@@ -62,5 +66,8 @@ http://trac.osgeo.org/gdal/wiki/BuildHints""", "Error: GDAL library not found!",
 			sys.exit(1)
 		print "GDAL library not available - please install GDAL and it's python module!"
 
+	wx.MessageBox("""This is a development version of MapTiler application.
+It has known bugs and limits.\n
+It is not for production use but for testing and preview!""", "MapTiler Alpha version (%s)" % __version__, wx.ICON_INFORMATION)
 	app.Show()
 	app.MainLoop()
