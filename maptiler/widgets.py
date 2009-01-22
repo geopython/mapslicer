@@ -8,8 +8,6 @@ import wx
 import wx.combo
 import config
 
-import gdalpreprocess
-
 from config import _, nodata
 
 class FileDrop(wx.FileDropTarget):
@@ -116,7 +114,8 @@ class FilePanel(wx.Panel):
 			wx.MessageBox("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered.""", "MapTiler: Not yet implemented :-(", wx.ICON_ERROR)
 		
 		filename = filename.encode('utf8')
-		filerecord = gdalpreprocess.singlefile(filename)
+		from gdalpreprocess import singlefile
+		filerecord = singlefile(filename)
 		if filename:
 			config.files.append(filerecord)
 		

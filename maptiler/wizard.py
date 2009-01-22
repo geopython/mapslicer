@@ -9,7 +9,6 @@ import wx.lib.wxpTag
 #import wx.animate
 import webbrowser
 import config
-from wxgdal2tiles import wxGDAL2Tiles
 
 #from unicodedata import normalize, combining
 #strip_diacritics = lambda text: filter(lambda i: not combining(i), normalize('NFKD', text))
@@ -45,6 +44,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			self.FindWindowByName('srs').SetValue(config.srs)
 		elif step == 3:
 			try:
+				from wxgdal2tiles import wxGDAL2Tiles
 				g2t = wxGDAL2Tiles(['--profile',config.profile,'--s_srs', config.srs, str(config.files[0][2]) ])
 				g2t.open_input()
 				config.tminz = g2t.tminz

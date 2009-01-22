@@ -7,14 +7,25 @@ import os, sys
 import wx
 
 # Under Windows set the GDAL variables to local directories in the py2exe distribution
-# Other systems need correctly installed GDAL libraries
 exepath = os.getcwd()
-if hasattr(sys, "frozen"):
+if hasattr(sys, "frozen") or sys.executable.find('MapTiler.app') != -1:
 	exepath = os.path.dirname(sys.executable)
 
-if sys.platform in ['win32','win64']:
+if sys.platform in ['win32','win64'] and os.path.exists(os.path.join( exepath, "gdaldata" )):
 	os.environ['GDAL_DATA'] = os.path.join( exepath, "gdaldata" )
 	os.environ['GDAL_DRIVER_PATH'] = os.path.join( exepath, "gdalplugins" )
+
+# Mac can have GDAL.framework in the application bundle or in the /Library/Frameworks
+if sys.platform == 'darwin':
+	frameworkpath = exepath[:(exepath.find('MapTiler.app')+12)]+'/Contents/Frameworks'
+	if not os.path.exists( os.path.join(frameworkpath, "GDAL.framework" )):
+		frameworkpath = "/Library/Frameworks"
+	os.environ['PROJ_LIB'] = os.path.join( frameworkpath, "PROJ.framework/Resources/proj/" )
+	os.environ['GDAL_DATA'] = os.path.join( frameworkpath, "GDAL.framework/Resources/gdal/" )
+	os.environ['GDAL_DRIVER_PATH'] = os.path.join( frameworkpath, "GDAL.framework/PlugIns/" )
+	sys.path.insert(0, os.path.join( frameworkpath, "GDAL.framework/Versions/Current/Python/site-packages/" ))
+
+# Other systems need correctly installed GDAL libraries
 
 import maptiler
 __version__ = maptiler.version
@@ -44,6 +55,9 @@ if __name__ == "__main__":
 
 	#wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic",0)
 	app = MapTilerApp(False)
+
+	#spath = wx.StandardPaths.Get()
+	#print spath.GetExecutablePath()
 	
 	try:
 		from osgeo import gdal
@@ -53,6 +67,8 @@ if __name__ == "__main__":
 			wx.MessageBox("""GDAL 1.6 framework is not found in your system!\n
 Please install GDAL framework from the website:
 http://www.kyngchaos.com/software:frameworks""", "Error: GDAL Framework not found!", wx.ICON_ERROR)
+			import webbrowser
+			webbrowser.open_new("http://www.kyngchaos.com/software:frameworks#gdal")
 			sys.exit(1)
 		elif sys.platform in ['win32','win64']:
 			wx.MessageBox("""GDAL 1.6 library is not found in your system!\n

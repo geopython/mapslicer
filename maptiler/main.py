@@ -14,9 +14,6 @@ import widgets
 # TODO: GetText
 from config import _
 
-import gdalpreprocess
-from wxgdal2tiles import wxGDAL2Tiles
-
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		
@@ -231,7 +228,8 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		if step == 2:
 			print config.srs
 			try:
-				srs = gdalpreprocess.SRSInput(config.srsformat, config.srs)
+				from gdalpreprocess import SRSInput
+				srs = SRSInput(config.srsformat, config.srs)
 			except:
 				print "!!! Exception in SRS reading"
 			print srs
@@ -259,7 +257,8 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		if len(config.files) > 0:
 			wx.MessageBox("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered.""", "MapTiler: Not yet implemented :-(", wx.ICON_ERROR)
 
-		filerecord = gdalpreprocess.singlefile(filename)
+		from gdalpreprocess import singlefile
+		filerecord = singlefile(filename)
 		if filename:
 			config.files.append(filerecord)
 		
@@ -327,7 +326,8 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		#params = ['--s_srs','EPSG:4326','/Users/klokan/Desktop/fox-denali-alaska-644060-xl.jpg']
 		if self.resume and params[0] != '--resume':
 			params.insert(0, '--resume')
-		
+
+		from wxgdal2tiles import wxGDAL2Tiles
 		self.g2t = wxGDAL2Tiles( params )
 		self.g2t.setProgressObject( self.html )
 
