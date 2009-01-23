@@ -178,7 +178,8 @@ class FilePanel(wx.Panel):
 				os.unlink(config.files[ self.lc.GetFirstSelected() ][2])
 				
 			filename = config.files[ self.lc.GetFirstSelected() ][0]
-			filerecord = gdalpreprocess.singlefile(filename, bbox)
+			from gdalpreprocess import singlefile
+			filerecord = singlefile(filename, bbox)
 			if filename:
 				config.files[self.lc.GetFirstSelected() ] = filerecord
 				self.lc.Refresh(False)
