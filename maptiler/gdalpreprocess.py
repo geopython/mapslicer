@@ -15,6 +15,7 @@ reference = osr.SpatialReference()
 def singlefile(filename, bbox = None):
 	"Returns [visible-filename, visible-georeference, realfilename, geotransform, xsize, ysize, srs]"
 	
+	osr.DontUseExceptions()
 	realfilename = filename
 	georeference = ""
 	geotransform = None
@@ -32,25 +33,27 @@ def singlefile(filename, bbox = None):
 	srs = in_ds.GetProjection()
 
 	if bbox:
+		# nsew = uly lry lrx ulx 
 		# TODO: set geotransform from [ulx, uly, lrx, lry] + xsize, ysize
 		geotransform = [0.0,0.0,0.0,0.0,0.0,0.0]
 		
-		geotransform[0] = bbox[0]
-		geotransform[1] = (bbox[2] - bbox[0]) / float(xsize)
+		geotransform[0] = bbox[3]
+		geotransform[1] = (bbox[2] - bbox[3]) / float(xsize)
 		geotransform[2] = 0.0
-		geotransform[3] = bbox[1]
+		geotransform[3] = bbox[0]
 		geotransform[4] = 0.0
-		geotransform[5] = (bbox[3] - bbox[1]) / float(ysize)
+		geotransform[5] = (bbox[1] - bbox[0]) / float(ysize)
 
 		in_ds.SetGeoTransform(geotransform)
 
 	elif in_ds.GetGCPCount() != 0:
 		georeference = "GCPs"
 		srs = in_ds.GetGCPProjection()
+		geotransform = gdal.GCPsToGeoTransform(in_ds.GetGCPs())
 		# Maybe warping before merging ? But warping before merging should use correct pixel size based on max zoom level!
 		# Or merging only with affine tranformation calculated from GCPs? 
 		# self.out_ds = gdal.AutoCreateWarpedVRT( self.in_ds, self.in_srs_wkt, self.out_srs.ExportToWkt() )
-	if geotransform != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
+	if geotransform != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0) and in_ds.GetGCPCount()==0:
 		georeference = " ".join(map(str, geotransform))
 	
 	vrtfilename = str(tempfile.mktemp(os.path.basename(filename)+'.vrt'))
@@ -74,17 +77,18 @@ def singlefile(filename, bbox = None):
 	return filename, georeference, realfilename, geotransform, xsize, ysize, srs
 
 def SRSInput(type, srs):
+	osr.UseExceptions()
 	# type = 0 - automatic, 1 - WKT, 2 - ESRI WKT, 3 - EPSG, 4 - Proj.4
 	if type == 0:
-		reference.SetFromUserInput(srs)
+		ok = reference.SetFromUserInput(srs)
 	elif type == 1:
-		reference.ImportFromWkt(srs)
+		ok = reference.ImportFromWkt(srs)
 	elif type == 2:
-		reference.ImportFromESRI(srs)
+		ok = reference.ImportFromESRI(srs)
 	elif type == 3:
-		reference.ImportFromEPSG(srs)
+		ok = reference.ImportFromEPSG(srs)
 	elif type == 4:
-		reference.ImportFromProj4(srs)
+		ok = reference.ImportFromProj4(srs)
 	return reference.ExportToPrettyWkt()
 	
 if __name__=='__main__':

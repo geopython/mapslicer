@@ -17,6 +17,9 @@ from config import _
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		
+		spath = wx.StandardPaths.Get()
+		config.documentsdir = spath.GetDocumentsDir()
+
 		self.abortEvent = delayedresult.AbortEvent()
 		self.jobID = 0
 		self.rendering = False
@@ -71,13 +74,9 @@ class MainFrame(wx.Frame):
 		
 		self.label_10 = wx.StaticText(self, -1, _("MapTiler - Map Tile Generator for Mashups"))
 
-		#converts geographic raster data (TIFF/GeoTIFF, MrSID, ECW, JPEG2000, Erdas HFA, NOAA BSB, JPEG, ...) into
 		self.html = wizard.WizardHtmlWindow(self.panel_2, -1)
-		self.html.SetBorders(2)
-		self.html.SetStep(0)
+		self.html.SetBorders(0)
 		
-		#self.html = widgets.FilePanel(self.panel_2, -1)
-
 		self.label_8 = wx.StaticText(self, -1, _("http://www.maptiler.org/"))
 		self.label_9 = wx.StaticText(self, -1, _(u"(C) 2008 - Klokan Petr Přidal"))
 
@@ -85,6 +84,9 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_BUTTON, self.OnBack, self.button_back)
 		self.button_continue = wx.Button(self, -1, _("&Continue"))
 		self.Bind(wx.EVT_BUTTON, self.OnContinue, self.button_continue)
+
+		# Set the first step of the wizard..
+		self.SetStep(1)
 
 		self.__set_properties()
 		self.__do_layout()
@@ -149,7 +151,7 @@ class MainFrame(wx.Frame):
 		info = wx.AboutDialogInfo()
 		info.Name = "MapTiler"
 		info.Version = config.version
-		info.Copyright = "(C) 2008 Klokan Petr Pridal"
+		info.Copyright = u"(C) 2008 Klokan Petr Přidal"
 		info.Description =	"""MapTiler is a powerful tool for online map publishing and generation of raster overlay mashups.
 Your geodata are transformed to the tiles compatible with Google Maps and Earth - ready for uploading to your webserver."""
 
@@ -172,7 +174,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 	def OnOpen(self, event):
 		dlg = wx.FileDialog(
 			self, message="Choose a file",
-			defaultDir=os.getcwd(),
+			defaultDir=config.documentsdir,
 			defaultFile="",
 			wildcard=config.supportedfiles,
 			style=wx.OPEN | wx.MULTIPLE #| wx.CHANGE_DIR
@@ -188,8 +190,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 				
 		dlg.Destroy()
 		step = self.html.GetActiveStep()
-		self.html.SaveStep(step)
-		self.html.SetStep(1)
+		self.SetStep(2)
 
 	def OnPrefs(self, event):
 		dlg = wx.MessageDialog(self, "This would be an preferences Dialog\n"
@@ -197,57 +198,101 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 								"Preferences", wx.OK | wx.ICON_INFORMATION)
 		dlg.ShowModal()
 		dlg.Destroy()
+
+	def SetLableUpTo(self, step):
+		if step > len(self.steplabel):
+			step = len(self.steplabel)
+		for i in range(0,step):
+			self.steplabel[step].Enable()
+		for i in range(step, len(self.steplabel)):
+			self.steplabel[step].Enable(False)
+
+	def SetStep(self, step):
+		# 1 - 7 normal, step 8 - before render + rendering + resume, step 9 - final
 		
+		# Label of the buttons
+		if step < 7:
+			self.button_continue.SetLabel(_("&Continue"))
+			self.button_back.SetLabel(_("Go &Back"))
+		if step == 8:
+			if self.rendering:
+				self.button_continue.SetLabel(_("&Render"))
+				self.button_back.SetLabel(_("&Stop"))
+			elif self.resume:
+				self.button_continue.SetLabel(_("&Resume"))
+				self.button_back.SetLabel(_("Go &Back"))
+			else:
+				self.button_continue.SetLabel(_("&Render"))
+				self.button_back.SetLabel(_("Go &Back"))
+		if step == 9:
+			self.button_continue.SetLabel("Exit")
+			self.button_continue.Enable()
+
+			self.button_continue.Enable(False)
+			if self.rendering:
+				self.button_back.SetLabel(_("&Stop"))
+			
+		# Enable / Disable
+		if step == 1:
+			self.button_back.Enable(False)
+		else:
+			self.button_back.Enable()
+			
+		if step == 8 and self.rendering:
+			self.button_continue.Enable(False)
+		else:
+			self.button_continue.Enable()
+
+		# Hide / Show
+		if step == 9:
+			self.button_back.Hide()
+		else:
+			self.button_back.Show()
+
+		oldstep = self.html.GetActiveStep()
+		if oldstep != step:
+			self.html.SaveStep(oldstep)
+			self.html.SetStep(step)
+
 	def OnBack(self, event):
 		step = self.html.GetActiveStep()
-		if step > 0 and not self.rendering:
-			self.steplabel[step].Enable(False)
-			self.html.SaveStep(step)
-			self.html.SetStep( step - 1 )
-		if step == 7 and not self.rendering:
-			self.button_continue.SetLabel(_("&Continue"))
-		if step == 7 and self.rendering:
-			self.button_continue.Enable()
-			self.button_continue.SetLabel(_("&Resume"))
-			self.button_back.SetLabel(_("Go &Back"))
+		if step > 0 and step < 9 and not self.rendering:
+			self.SetStep( step-1 )
+		elif self.rendering:
 			self._renderstop()
-		if step == 0:
-			self.button_back.Enable(False)
+			self.SetStep( step )
 		
 	def OnContinue(self, event):
-		self.button_back.Enable()
 		step = self.html.GetActiveStep()
-		self.html.SaveStep(step)
-		if step == 1:
+		if step == 2:
 			if len(config.files) == 0:
 				wx.MessageBox("""You have to add some files for rendering""", "No files specified", wx.ICON_ERROR)
 				return
 			if config.files[0][1] == '' and config.profile != 'raster':
 				wx.MessageBox("""Sorry the file you have specified does not have georeference.\n\nClick on the 'Georeference' button and give a bounding box or \ncreate a world file (.wld) for the specified file.""", "Missing georeference", wx.ICON_ERROR)
 				return
-		if step == 2:
-			print config.srs
-			try:
-				from gdalpreprocess import SRSInput
-				srs = SRSInput(config.srsformat, config.srs)
-			except:
-				print "!!! Exception in SRS reading"
-			print srs
-			if config.profile != 'raster' and not srs:
-				wx.MessageBox("""You have to specify refenrece system of your coordinates.\n\nTIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'""", "Not valid spatial reference system", wx.ICON_ERROR)
-				return
-			else:
-				config.srs = srs
-		if step == 6:
-			self.button_continue.SetLabel(_("&Render"))
-		if step == 7:
-			self.button_back.SetLabel(_("&Stop"))
-			self.button_continue.Enable(False)
+		if step == 3:
+			self.html.SaveStep(3)
+			#print config.srs
+			if config.files[0][1] != '':
+				try:
+					from gdalpreprocess import SRSInput
+					srs = SRSInput(config.srsformat, config.srs)
+				except Exception, error:
+					wx.MessageBox("""%s""" % error , "The SRS definition is not correct", wx.ICON_ERROR)
+					return
+				print srs
+				if not srs:
+					wx.MessageBox("""You have to specify reference system of your coordinates.\n\nTIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'""", "Not valid spatial reference system", wx.ICON_ERROR)
+					return
+				else:
+					config.srs = srs
+		if step == 8:
 			self._renderstart()
-		if step < 7: # maximum is 7
-			self.html.SetStep( step + 1 )
-			self.steplabel[step+1].Enable()
-		if step > 7:
+			self.SetStep( 8 )
+		if step < 8: # maximum is 7
+			self.SetStep( step + 1 )
+		if step > 8:
 			self.Destroy()
 			
 	def _add(self, filename):
@@ -259,7 +304,8 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 
 		from gdalpreprocess import singlefile
 		filerecord = singlefile(filename)
-		if filename:
+		if filerecord:
+			config.files = []
 			config.files.append(filerecord)
 		
 	def _renderstop(self):
@@ -362,10 +408,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 
 		if not self.g2t.stopped:
 			self.html.UpdateRenderText("Task is finished!")
-			self.html.SetStep(9)
-			self.button_back.Hide()
-			self.button_continue.SetLabel("Exit")
-			self.button_continue.Enable()
+			self.SetStep(9)
 
 
 # end of class MainFrame

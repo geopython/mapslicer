@@ -10,9 +10,6 @@ import wx.lib.wxpTag
 import webbrowser
 import config
 
-#from unicodedata import normalize, combining
-#strip_diacritics = lambda text: filter(lambda i: not combining(i), normalize('NFKD', text))
-
 class WizardHtmlWindow(wx.html.HtmlWindow):
 	def __init__(self, parent, id):
 		wx.html.HtmlWindow.__init__(self, parent, id, style=wx.html.HW_NO_SELECTION )
@@ -32,17 +29,17 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			self.SetPage(stepfinal % (config.outputdir, config.outputdir) )
 			return
 		self.SetPage(steps[step])
-		if step == 0:
-			self.FindWindowByName('mercator').SetValue(1)
-		elif step == 1:
-			pass
+		if step == 1:
+			self.FindWindowByName(config.profile).SetValue(1)
 		elif step == 2:
+			pass
+		elif step == 3:
 			if not config.srs:
 				config.srs = config.files[0][6]
-			if config.profile == 'raster' and not config.srs:
+			if not config.srs and config.bboxgeoref:
 				config.srs = "EPSG:4326"
 			self.FindWindowByName('srs').SetValue(config.srs)
-		elif step == 3:
+		elif step == 4:
 			try:
 				from wxgdal2tiles import wxGDAL2Tiles
 				g2t = wxGDAL2Tiles(['--profile',config.profile,'--s_srs', config.srs, str(config.files[0][2]) ])
@@ -55,12 +52,12 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 				print "!!! Exception: GDAL2Tiles initialization - for getting the default values"
 			self.FindWindowByName('tminz').SetValue(config.tminz)
 			self.FindWindowByName('tmaxz').SetValue(config.tmaxz)
-		elif step == 4:
-			filename = config.files[0][0]
-			config.outputdir = os.path.join( os.path.dirname(filename),
-			os.path.splitext(os.path.basename( filename ))[0] )
-			self.FindWindowByName('outputdir').SetPath(config.outputdir)
 		elif step == 5:
+			filename = config.files[0][0]
+			if config.outputdir == '':
+				config.outputdir = os.path.join( os.path.dirname(filename), os.path.splitext(os.path.basename( filename ))[0] )
+			self.FindWindowByName('outputdir').SetPath(config.outputdir)
+		elif step == 6:
 			if config.profile=='mercator':
 				self.FindWindowByName('google').Enable(True)
 				self.FindWindowByName('openlayers').Enable(True)
@@ -79,7 +76,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			self.FindWindowByName('openlayers').SetValue(config.openlayers)
 			self.FindWindowByName('kml').SetValue(config.kml)
 			
-		elif step == 6:
+		elif step == 7:
 			config.title = os.path.basename( config.files[0][0] )
 			self.FindWindowByName('title').SetValue(config.title)
 			self.FindWindowByName('copyright').SetValue(config.copyright)
@@ -87,7 +84,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			self.FindWindowByName('yahookey').SetValue(config.yahookey)
 		
 	def SaveStep(self, step):
-		if step == 0:
+		if step == 1:
 			# Profile
 			if self.FindWindowByName('mercator').GetValue():
 				config.profile = 'mercator'
@@ -105,36 +102,36 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 				config.openlayers = True
 				config.kml = False
 			print config.profile
-		elif step == 1:
+		elif step == 2:
 			# Files + Nodata
 			print config.files
 			config.nodata = self.FindWindowByName('nodatapanel').GetColor()
 			print config.nodata
-		elif step == 2:
+		elif step == 3:
 			config.oldsrs = config.srs
-			config.srs = self.FindWindowByName('srs').GetValue().encode('utf-8').strip()
+			config.srs = self.FindWindowByName('srs').GetValue().encode('ascii','ignore').strip()
 			config.srsformat = self.FindWindowByName('srs').GetSelection()
 			print config.srs
-		elif step == 3:
+		elif step == 4:
 			config.tminz = int(self.FindWindowByName('tminz').GetValue())
 			config.tmaxz = int(self.FindWindowByName('tmaxz').GetValue())
 			print config.tminz
 			print config.tmaxz
-		elif step == 4:
+		elif step == 5:
 			config.outputdir = self.FindWindowByName('outputdir').GetPath().encode('utf8')
 			config.url = self.FindWindowByName('url').GetValue()
 			if config.url == 'http://':
 				config.url = ''
 			print config.outputdir
 			print config.url
-		elif step == 5:
+		elif step == 6:
 			config.google = self.FindWindowByName('google').GetValue()
 			config.openlayers = self.FindWindowByName('openlayers').GetValue()
 			config.kml = self.FindWindowByName('kml').GetValue()
 			print config.google
 			print config.openlayers
 			print config.kml
-		elif step == 6:
+		elif step == 7:
 			config.title = self.FindWindowByName('title').GetValue().encode('utf8')
 			if not config.title:
 				config.title = os.path.basename( config.files[0][0] ).encode('utf8')
@@ -164,7 +161,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			
 
 
-step1 = """<h3>Step 1: Tile Profile</h3>
+step1 = """<h3>Selection of the tile profile</h3>
 	MapTiler generates tiles for simple online publishing of maps. It offers several tile profiles - several approaches how to cut a map into small tiles.
 	<p>
 	<font color="#DC5309" size="large"><b>What kind of tiles would you like to generate?</b></font>
@@ -194,7 +191,7 @@ step1 = """<h3>Step 1: Tile Profile</h3>
 	</blockquote>
 	</font>"""
 	
-step2 = """<h3>Step 2: Source Data Files</h3>
+step2 = """<h3>Source data files</h3>
 	Please choose the raster files of the maps you would like to publish.
 	<p>
 	<font color="#DC5309" size="large"><b>Input raster map files:</b></font>
@@ -210,19 +207,16 @@ step2 = """<h3>Step 2: Source Data Files</h3>
 	<wxp module="maptiler.widgets" class="NodataPanel" name="test" height="30" width=100%>
 	<param name="name" value="nodatapanel"></wxp>"""
 
-step3 = """<h3>Step 3: Spatial Reference</h3>
-	It is necessary to have the exact definition of the coordinate system used for georeferencing of the input files, the Spatial Reference System (SRS). If this information is embedded in the input files we use it. The default is latitude and longitude in WGS84 datum without a map projection (EPSG:4326).
+step3 = """<h3>Spatial reference system (SRS)</h3>
+	It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in the <a href="http://help.maptiler.org/coordinates/">MapTiler help</a>.
 	<p>
 	<font color="#DC5309" size="large"><b>What is the Spatial Reference System used in your files?</b></font>
 	<p>
-	<wxp module="maptiler.widgets" class="SpatialReferencePanel" name="test" height="200" width=100%>
+	<wxp module="maptiler.widgets" class="SpatialReferencePanel" name="test" height="260" width=100%>
 	<param name="name" value="srs">
-	</wxp>
-	<font size="-1">
-	Note: More info about spatial referencing is at <a href="http://help.maptiler.org/coordinates/">http://help.maptiler.org/coordinates/</a>.
-	</font>"""
+	</wxp>"""
 
-step4 = """<h3>Step 4: Tile Details</h3> <!-- Zoom levels, Tile Format (PNG/JPEG) & Addressing, PostProcessing -->
+step4 = """<h3>Details about the tile pyramid</h3> <!-- Zoom levels, Tile Format (PNG/JPEG) & Addressing, PostProcessing -->
 	In this step you should specify the details related to rendered tile pyramid.
 	<!-- file format and convention for tile addressing (names of the tile files) which you would like to use. -->
 	<p>
@@ -230,6 +224,9 @@ step4 = """<h3>Step 4: Tile Details</h3> <!-- Zoom levels, Tile Format (PNG/JPEG
 	<p>
 	Minimum zoom: <wxp module="wx" class="SpinCtrl" name="test"><param name="name" value="tminz"></wxp> &nbsp;
 	Maximum zoom: <wxp module="wx" class="SpinCtrl" name="test"><param name="name" value="tmaxz"></wxp>
+	<br>
+	<font size="-1">
+	Note: The selected zoom levels are calculated from your input data and should be OK in most cases.</font>
 	<p>&nbsp;
 	<p>
 	<font size="-1">
@@ -275,7 +272,7 @@ step4 = """<h3>Step 4: Tile Details</h3> <!-- Zoom levels, Tile Format (PNG/JPEG
 	-->
 	"""
 
-step5 = """<h3>Step 5: Destination</h3>
+step5 = """<h3>Destination folder and address</h3>
 Please select a directory where the generated tiles should be saved. Similarly you can specify the Internet address where will you publish the map.
 <p>
 <font color="#DC5309" size="large"><b>Where to save the generated tiles?</b></font>
@@ -292,7 +289,7 @@ Destination URL:<br/>
 Note: You should specify the URL if you need to generate the correct KML for Google Earth.
 </font>"""
 
-step6 = """<h3>Step 6: Viewers</h3>
+step6 = """<h3>Selection of the viewers</h3>
 MapTiler can also generate simple web viewers for presenting the tiles as a map overlay. You can use these viewers as a base for your mashups. Similarly it is possible to generate KML files for Google Earth.
 <p>
 <font color="#DC5309" size="large"><b>What viewers should be generated?</b></font>
@@ -312,7 +309,7 @@ If this option is selected then metadata for Google Earth is generated for the t
 </blockquote>
 </font>"""
 
-step7 = """<h3>Step 7: Viewer Details</h3>
+step7 = """<h3>Details for generating the viewers</h3>
 Please add information related to the selected viewers.
 <p>
 <font color="#DC5309" size="large"><b>Info about the map</b></font>
@@ -337,7 +334,7 @@ Yahoo Application ID key:<br/>
 Note: You can get it <a href="http://developer.yahoo.com/wsregapp/">at this webpage</a>.
 </font>"""
 	
-step8 = """<h3>Step 8: Rendering</h3>
+step8 = """<h3>Tile rendering</h3>
 Now you can start the rendering of the map tiles. It can be a time consuming process especially for large datasets... so be patient please.
 <p>
 <font color="#DC5309" size="large"><b>Rendering progress:</b></font>
@@ -354,17 +351,19 @@ Now you can start the rendering of the map tiles. It can be a time consuming pro
 With nice animation:
 <wxp module="maptiler.widgets" class="ProgressPanel" name="progress" width="100%" height="50"><param name="name" value="progress"></wxp> -->
 <p>&nbsp;
-<p>
 <font size="-1">
-Thank you for using this software.<br/>
-You can join the <a href="http://groups.google.com/group/maptiler">MapTiler User Group</a> to speak with other MapTiler users and tell us about the maps you published!<br>
-You can also check the <a href="http://maptiler.uservoice.com/">MapTiler TODO list</a>, where you can vote for planned features or submit your own ideas for improvement, or you can <a href="http://code.google.com/p/maptiler/issues/list">report bugs</a>.
+<br>Thank you for using MapTiler application. You can help us with improvement of this software!
+<br>Join the <a href="http://groups.google.com/group/maptiler">MapTiler User Group</a> to speak with other MapTiler users and tell us about the maps you published!
+<br>You can also check the <a href="http://maptiler.uservoice.com/">MapTiler Feedback Forum</a>, where you can vote for planned features or submit your own ideas for improvement, or you can <a href="http://code.google.com/p/maptiler/issues/list">report bugs</a>.
 <p>
-This is an open-source project. We welcome contribution from other programmers or <a href="http://www.maptiler.org/support/">donations or sponsorship</a> from our users. <b>Help us with improvement of this software!</b> <a href="http://help.maptiler.org/credits/">Sponsors and contributors</a>, thank you!
+This is an open-source project. We welcome contribution from other programmers or <a href="http://www.maptiler.org/support/">donations or sponsorship</a> from our users.<br>
+This software was created with the support of <a href="http://help.maptiler.org/credits/">sponsors and contributors</a>, thank you!
 <p>
-There is also an offer of <a href="http://www.maptiler.com/">commercial services and paid user-support</a> related to batch map tile rendering for big datasets, conversion of input geodata and development of new features.
-</font>"""
+There is also an offer of <a href="http://www.maptiler.com/">commercial services and paid user-support</a> related to batch map tile rendering for big datasets, conversion of input geodata and development of new features.</font>"""
 
+# step9 - step8 with Resume button
+
+# step10:
 stepfinal = """<h3>Your rendering task is finished!</h3>
 Thank you for using this software. Now you can see the results. If you upload the directory with tiles to the Internet your map is published!
 <p>
@@ -383,14 +382,13 @@ The generated tiles and also the viewers are available in the output directory:
 <p>&nbsp;
 <p>
 <center>
-Please support development and maintenance of this software. Even if you submit a small amount like one Euro or a Dollar it helps us!
+Please support development and maintenance of this project. It makes it possible for us to spend more time working on this free software.<br>
+Even a small amount helps!
 <p>
 VISA, MasterCard, American Express and other forms of payment as well as PayPal are available.
 <p>
 <a href="http://www.maptiler.org/support/">Support MapTiler project by donating money</a>
-<p>
-Your support makes it possible for us to spend time working on this free software and publish new versions.
 </center>
 """
 
-steps = [step1, step2, step3, step4, step5, step6, step7, step8 ]
+steps = ['NULL',step1, step2, step3, step4, step5, step6, step7, step8 ]

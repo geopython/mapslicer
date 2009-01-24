@@ -1,4 +1,4 @@
-version = "1.0 alpha2"
+version = "1.0 alpha3"
 
 profile = 'mercator'
 files = []
@@ -17,6 +17,11 @@ title = ""
 copyright = "&copy;"
 googlekey = ""
 yahookey = ""
+
+documentsdir = ""
+
+bboxgeoref = False
+
 
 # Placeholder for GetText
 def _(str):
@@ -45,9 +50,18 @@ supportedfiles =  "Supported raster files|*.tif;*.tiff;*.kap;*.img;*.sid;*.ecw;*
 	"All files (*.*)|*.*"
 
 srsFormatList = ['format automatically detected',
-	'WKT - Well Known Text definition',
-	'ESRI WKT - Well Known Text definition',
-	'EPSG number',
-	'EPSGA number',
-	'Proj.4 definition'
+        'WKT - Well Known Text definition',
+        'ESRI WKT - Well Known Text definition',
+        'EPSG number',
+        'EPSGA number',
+        'Proj.4 definition'
 ]
+
+s = """
+srsFormatList = ['Latitude and longitude - WGS84 Datum (EPSG:4326)',
+	'Search the coordinate system by name',
+	'Specify the id-number from the EPSG database',
+	'Provide the definition of the system (WKT, Proj.4,..)'
+	'One of five .. recently used?'
+]
+"""

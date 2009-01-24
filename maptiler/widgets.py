@@ -7,6 +7,7 @@ import os
 import wx
 import wx.combo
 import config
+import webbrowser
 
 from config import _, nodata
 
@@ -117,21 +118,23 @@ class FilePanel(wx.Panel):
 		from gdalpreprocess import singlefile
 		filerecord = singlefile(filename)
 		if filename:
+			config.files = []
 			config.files.append(filerecord)
 		
 			self.lc.SetItemCount(len(config.files))
 			self.lc.Refresh(False)
 			if len(config.files):
 				self.bdel.Enable()
+			self.resume = False
 	
 	def onAdd(self, evt):
 		dlg = wx.FileDialog(
 			self, message="Choose a file",
-			defaultDir=os.getcwd(),
+			defaultDir=config.documentsdir,
 			defaultFile="",
 			wildcard=config.supportedfiles,
-			style=wx.OPEN | wx.MULTIPLE #| wx.CHANGE_DIR
-			)
+			style=wx.OPEN #| wx.MULTIPLE # | wx.CHANGE_DIR
+		)
 
 		# Show the dialog and retrieve the user response. If it is the OK response, 
 		# process the data.
@@ -158,8 +161,8 @@ class FilePanel(wx.Panel):
 	def onGeoreference(self, evt):
 		bbox = None
 		dlg = wx.TextEntryDialog(
-				self, "Please specify bounding box for '%s' as 4 numbers\nFormat: 'ulx uly lrx lry' where ulx means upper left x coordinate.\n\nAlternatively you can create a world file (.wld) for this file" % config.files[ self.lc.GetFirstSelected() ][0],
-				'Georeference with bounding box', '-180 90 180 -90')
+				self, "Please specify bounding box for '%s' as 4 numbers\nFormat: 'north south east west'\n\nAlternatively you can create a world file (.wld) or (.tab) by an external GIS software" % config.files[ self.lc.GetFirstSelected() ][0],
+				'Georeference with bounding box', '90 -90 180 -180')
 
 		#dlg.SetValue("Python is the best!")
 
@@ -169,7 +172,6 @@ class FilePanel(wx.Panel):
 			print str
 			try:
 				bbox = map(float, str.split())
-				bbox[3] = bbox[3]
 			except:
 				return
 		
@@ -180,9 +182,10 @@ class FilePanel(wx.Panel):
 			filename = config.files[ self.lc.GetFirstSelected() ][0]
 			from gdalpreprocess import singlefile
 			filerecord = singlefile(filename, bbox)
-			if filename:
+			if filerecord:
 				config.files[self.lc.GetFirstSelected() ] = filerecord
 				self.lc.Refresh(False)
+				config.bboxgeoref = True
 			
 		dlg.Destroy()
 	
@@ -267,16 +270,43 @@ class SpatialReferencePanel(wx.Panel):
 		self.ch1 = wx.Choice(self, -1, choices = config.srsFormatList)
 		self.ch1.SetSelection(0)
 		sizer.Add(self.ch1, 0, wx.EXPAND|wx.ALL, 3)
-		self.tc1 = wx.TextCtrl(self, -1, "EPSG:4326", style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+		self.tc1 = wx.TextCtrl(self, -1, config.srs, style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
 		sizer.Add(self.tc1, 1, wx.EXPAND|wx.ALL, 3)
+		self.bpreview = wx.Button(self, -1, "Preview the map reference with this SRS")
+		sizer.Add(self.bpreview, 0, wx.ALL, 3)
 
 		self.SetSizer(sizer)
+		self.Bind(wx.EVT_BUTTON, self.Preview, self.bpreview)
 		
+
+	def Preview(self, evt):
+		if True:
+		#try:
+			from gdalpreprocess import SRSInput
+			srs = SRSInput(self.GetSelection(), self.GetValue())
+			filerecord = config.files[0]
+			T = filerecord[3]
+			xsize, ysize = filerecord[4:6]
+			from osgeo import osr
+			source = osr.SpatialReference()
+			source.SetFromUserInput( srs )
+			wgs84 = osr.SpatialReference()
+			wgs84.ImportFromEPSG( 4326 )
+			trans = osr.CoordinateTransformation(source, wgs84)
+			ulx, uly = trans.TransformPoint(T[0], T[3])[:2]
+			urx, ury = trans.TransformPoint(T[0] + T[1]*xsize, T[3] + T[4]*xsize)[:2]
+			llx, lly = trans.TransformPoint(T[0] + T[2]*ysize, T[3] + T[5]*ysize)[:2]
+			lrx, lry = trans.TransformPoint(T[0] + T[1]*xsize + T[2]*ysize, T[3] + T[4]*xsize + T[5]*ysize )[:2]
+			webbrowser.open_new("http://www.maptiler.org/preview/?points=%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f" % 
+				(uly, ulx, ury, urx, lry, lrx, lly, llx))
+		#except Exception, error:
+		#	wx.MessageBox("%s" % error , "The SRS definition is not correct", wx.ICON_ERROR)
+
 	def SetValue(self, value):
 		self.tc1.SetValue(value)
 		
 	def GetValue(self):
-		return self.tc1.GetValue()
+		return self.tc1.GetValue().encode('ascii','ignore')
 	
 	def SetSelection(self, value):
 		return self.ch1.SetSelection(value)
