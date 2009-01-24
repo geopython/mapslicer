@@ -21,8 +21,8 @@ if sys.platform in ['win32','win64']:
 	      scripts=['maptiler.py'],
 	      windows=[ {'script':'maptiler.py', "icon_resources": [(1, os.path.join('resources', 'maptiler.ico'))] } ],
 	      data_files=[
-	        ('proj', glob.glob('C:\\OSGeo4W\\share\\proj\\*.*')),
-	        ('gdal', glob.glob('C:\\OSGeo4W\\apps\\gdal-16\\share\\gdal\\*.*')),
+	        ('proj', glob.glob('C:\\OSGeo4W\\share\\proj\\*')),
+	        ('gdal', glob.glob('C:\\OSGeo4W\\apps\\gdal-16\\share\\gdal\\*')),
 	        ('gdalplugins', glob.glob('C:\\OSGeo4W\\apps\\gdal-16\\bin\\gdalplugins\\*.*')),
 	        ('', glob.glob('C:\\OSGeo4W\\bin\\*.dll')+glob.glob('C:\\OSGeo4W\\bin\\*.manifest')),
 	      ],
