@@ -76,19 +76,9 @@ def singlefile(filename, bbox = None):
 	srs = reference.ExportToPrettyWkt()
 	return filename, georeference, realfilename, geotransform, xsize, ysize, srs
 
-def SRSInput(type, srs):
+def SRSInput(srs):
 	osr.UseExceptions()
-	# type = 0 - automatic, 1 - WKT, 2 - ESRI WKT, 3 - EPSG, 4 - Proj.4
-	if type == 0:
-		ok = reference.SetFromUserInput(srs)
-	elif type == 1:
-		ok = reference.ImportFromWkt(srs)
-	elif type == 2:
-		ok = reference.ImportFromESRI(srs)
-	elif type == 3:
-		ok = reference.ImportFromEPSG(srs)
-	elif type == 4:
-		ok = reference.ImportFromProj4(srs)
+	reference.SetFromUserInput(srs)
 	return reference.ExportToPrettyWkt()
 	
 if __name__=='__main__':

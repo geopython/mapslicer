@@ -3,6 +3,7 @@
 # TODO: Cleaning the code, refactoring before 1.0 publishing
 
 import os, sys
+import webbrowser
 import wx
 import wx.lib.delayedresult as delayedresult # threading in wx
 
@@ -11,14 +12,16 @@ import icons
 import wizard
 import widgets
 
+
 # TODO: GetText
 from config import _
 
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		
-		spath = wx.StandardPaths.Get()
-		config.documentsdir = spath.GetDocumentsDir()
+		#spath = wx.StandardPaths.Get()
+		#config.documentsdir = spath.GetDocumentsDir()
+		config.documentsdir = os.path.expanduser('~')
 
 		self.abortEvent = delayedresult.AbortEvent()
 		self.jobID = 0
@@ -73,9 +76,6 @@ class MainFrame(wx.Frame):
 		self.steplabel.append(wx.StaticText(self, -1, _("Rendering")))
 		
 		self.label_10 = wx.StaticText(self, -1, _("MapTiler - Map Tile Generator for Mashups"))
-
-		self.html = wizard.WizardHtmlWindow(self.panel_2, -1)
-		self.html.SetBorders(0)
 		
 		self.label_8 = wx.StaticText(self, -1, _("http://www.maptiler.org/"))
 		self.label_9 = wx.StaticText(self, -1, _(u"(C) 2008 - Klokan Petr Přidal"))
@@ -85,6 +85,11 @@ class MainFrame(wx.Frame):
 		self.button_continue = wx.Button(self, -1, _("&Continue"))
 		self.Bind(wx.EVT_BUTTON, self.OnContinue, self.button_continue)
 
+		#self.html = widgets.SpatialReferencePanel(self.panel_2, -1)
+		self.html = wizard.WizardHtmlWindow(self.panel_2, -1)
+		self.html.SetBorders(0)
+		self.html.SetMinSize((500, 385))
+
 		# Set the first step of the wizard..
 		self.SetStep(1)
 
@@ -93,13 +98,13 @@ class MainFrame(wx.Frame):
 
 	def __set_properties(self):
 		self.SetTitle(_("MapTiler - Map Tile Generator for Mashups"))
-		#self.SetIcon( icons.getIconIcon() )
+		if sys.platform in ['win32','win64','linux']:
+			self.SetIcon( icons.getIconIcon() )
 		self.SetBackgroundColour(wx.Colour(253, 253, 253))
 		for label in self.steplabel[1:]:
 			label.Enable(False)
 		self.label_10.SetForegroundColour(wx.Colour(220, 83, 9))
 		self.label_10.SetFont(wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.BOLD, 0, ""))
-		self.html.SetMinSize((500, 385))
 		self.panel_2.SetBackgroundColour(wx.Colour(255, 255, 255))
 		self.panel_1.SetBackgroundColour(wx.Colour(192, 192, 192))
 		self.label_8.SetFont(wx.Font(9, wx.DEFAULT, wx.NORMAL, wx.NORMAL, 0, ""))
@@ -203,15 +208,16 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		if step > len(self.steplabel):
 			step = len(self.steplabel)
 		for i in range(0,step):
-			self.steplabel[step].Enable()
+			self.steplabel[i].Enable()
 		for i in range(step, len(self.steplabel)):
-			self.steplabel[step].Enable(False)
+			self.steplabel[i].Enable(False)
 
 	def SetStep(self, step):
 		# 1 - 7 normal, step 8 - before render + rendering + resume, step 9 - final
+		self.SetLableUpTo(step)
 		
 		# Label of the buttons
-		if step < 7:
+		if step < 8:
 			self.button_continue.SetLabel(_("&Continue"))
 			self.button_back.SetLabel(_("Go &Back"))
 		if step == 8:
@@ -225,12 +231,9 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 				self.button_continue.SetLabel(_("&Render"))
 				self.button_back.SetLabel(_("Go &Back"))
 		if step == 9:
+			self.button_back.SetLabel(_("Go &Back"))
 			self.button_continue.SetLabel("Exit")
 			self.button_continue.Enable()
-
-			self.button_continue.Enable(False)
-			if self.rendering:
-				self.button_back.SetLabel(_("&Stop"))
 			
 		# Enable / Disable
 		if step == 1:
@@ -243,12 +246,6 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		else:
 			self.button_continue.Enable()
 
-		# Hide / Show
-		if step == 9:
-			self.button_back.Hide()
-		else:
-			self.button_back.Show()
-
 		oldstep = self.html.GetActiveStep()
 		if oldstep != step:
 			self.html.SaveStep(oldstep)
@@ -256,7 +253,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 
 	def OnBack(self, event):
 		step = self.html.GetActiveStep()
-		if step > 0 and step < 9 and not self.rendering:
+		if step > 0 and not self.rendering:
 			self.SetStep( step-1 )
 		elif self.rendering:
 			self._renderstop()
@@ -275,9 +272,11 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			self.html.SaveStep(3)
 			#print config.srs
 			if config.files[0][1] != '':
+				print type(config.srs)
+				print config.srs
 				try:
 					from gdalpreprocess import SRSInput
-					srs = SRSInput(config.srsformat, config.srs)
+					srs = SRSInput(config.srs)
 				except Exception, error:
 					wx.MessageBox("""%s""" % error , "The SRS definition is not correct", wx.ICON_ERROR)
 					return
@@ -326,7 +325,6 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		print "-"*20
 		for p in params:
 			print type(p), p
-		#params = ['--s_srs','EPSG:4326','/Users/klokan/Desktop/fox-denali-alaska-644060-xl.jpg']
 		
 		delayedresult.startWorker(self._resultConsumer, self._resultProducer,
 				wargs=(self.jobID,self.abortEvent, params), jobID=self.jobID)
@@ -395,7 +393,6 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			self.html.UpdateRenderText("Rendering the overview tiles in the pyramid")
 			# Generation of the overview tiles (higher in the pyramid)
 			self.g2t.generate_overview_tiles()
-
 	
 	def _resultConsumer(self, delayedResult):
 		jobID = delayedResult.getJobID()
@@ -409,6 +406,8 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		if not self.g2t.stopped:
 			self.html.UpdateRenderText("Task is finished!")
 			self.SetStep(9)
+			self.rendering = False
+			self.resume = False
 
 
 # end of class MainFrame

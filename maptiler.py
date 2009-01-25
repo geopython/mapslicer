@@ -48,6 +48,7 @@ class MapTilerApp(wx.App):
 		wx.InitAllImageHandlers()
 		self.main_frame = maptiler.MainFrame(None, -1, "")
 		self.SetTopWindow(self.main_frame)
+		self.SetAppName("MapTiler")
 		return True
 		
 	def MacOpenFile(self, filename):

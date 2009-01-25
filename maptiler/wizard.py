@@ -6,7 +6,6 @@ import os
 import wx
 import wx.html
 import wx.lib.wxpTag
-#import wx.animate
 import webbrowser
 import config
 
@@ -26,6 +25,8 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 	def SetStep(self, step):
 		self.step = step
 		if step >= len(steps):
+			config.rendering = False
+			config.resume = False
 			self.SetPage(stepfinal % (config.outputdir, config.outputdir) )
 			return
 		self.SetPage(steps[step])
@@ -35,9 +36,12 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			pass
 		elif step == 3:
 			if not config.srs:
-				config.srs = config.files[0][6]
+				config.customsrs = config.files[0][6]
+				config.srs = config.customsrs
 			if not config.srs and config.bboxgeoref:
-				config.srs = "EPSG:4326"
+				config.srsformat = 1
+				config.srs = config.epsg4326
+			self.FindWindowByName('srs').SetSelection(config.srsformat)
 			self.FindWindowByName('srs').SetValue(config.srs)
 		elif step == 4:
 			try:
@@ -48,8 +52,8 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 				config.tmaxz = g2t.tmaxz
 				config.kml = g2t.kml
 				del g2t
-			except:
-				print "!!! Exception: GDAL2Tiles initialization - for getting the default values"
+			except Exception, error:
+				wx.MessageBox("%s" % error , "GDAL2Tiles initialization failed", wx.ICON_ERROR)
 			self.FindWindowByName('tminz').SetValue(config.tminz)
 			self.FindWindowByName('tmaxz').SetValue(config.tmaxz)
 		elif step == 5:
@@ -108,7 +112,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			config.nodata = self.FindWindowByName('nodatapanel').GetColor()
 			print config.nodata
 		elif step == 3:
-			config.oldsrs = config.srs
+			#config.oldsrs = config.srs
 			config.srs = self.FindWindowByName('srs').GetValue().encode('ascii','ignore').strip()
 			config.srsformat = self.FindWindowByName('srs').GetSelection()
 			print config.srs
@@ -354,7 +358,7 @@ With nice animation:
 <font size="-1">
 <br>Thank you for using MapTiler application. You can help us with improvement of this software!
 <br>Join the <a href="http://groups.google.com/group/maptiler">MapTiler User Group</a> to speak with other MapTiler users and tell us about the maps you published!
-<br>You can also check the <a href="http://maptiler.uservoice.com/">MapTiler Feedback Forum</a>, where you can vote for planned features or submit your own ideas for improvement, or you can <a href="http://code.google.com/p/maptiler/issues/list">report bugs</a>.
+<br>You can also check the <a href="http://maptiler.uservoice.com/">MapTiler Feedback Forum</a>, where you can vote for planned features or submit your own ideas for improvement. If you find a bug please <a href="http://code.google.com/p/maptiler/issues/list">report it here</a>.
 <p>
 This is an open-source project. We welcome contribution from other programmers or <a href="http://www.maptiler.org/support/">donations or sponsorship</a> from our users.<br>
 This software was created with the support of <a href="http://help.maptiler.org/credits/">sponsors and contributors</a>, thank you!

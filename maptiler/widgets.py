@@ -6,6 +6,8 @@ import os
 
 import wx
 import wx.combo
+import wx.lib.hyperlink
+import wx.lib.intctrl
 import config
 import webbrowser
 
@@ -266,24 +268,137 @@ class SpatialReferencePanel(wx.Panel):
 		#self.SetBackgroundColour(wx.Colour(255, 30, 50))
 		self.SetBackgroundColour('#ffffff')
 
-		sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.ch1 = wx.Choice(self, -1, choices = config.srsFormatList)
 		self.ch1.SetSelection(0)
-		sizer.Add(self.ch1, 0, wx.EXPAND|wx.ALL, 3)
-		self.tc1 = wx.TextCtrl(self, -1, config.srs, style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
-		sizer.Add(self.tc1, 1, wx.EXPAND|wx.ALL, 3)
-		self.bpreview = wx.Button(self, -1, "Preview the map reference with this SRS")
-		sizer.Add(self.bpreview, 0, wx.ALL, 3)
+		self.sizer.Add(self.ch1, 0, wx.EXPAND|wx.ALL, 3)
 
-		self.SetSizer(sizer)
+		# EPSG/ESRI codes
+		epsgsizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.epsgesri = wx.Choice(self, -1, choices = ['EPSG','ESRI'])
+		self.epsgesri.SetSelection(0)
+		epsgsizer.Add(self.epsgesri, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
+		self.epsgcode = wx.lib.intctrl.IntCtrl(self, value=4326, allow_none=True)
+		epsgsizer.Add(self.epsgcode, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
+		self.epsgbutton = wx.Button(self, -1, "Set")
+		epsgsizer.Add(self.epsgbutton, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
+		link = wx.lib.hyperlink.HyperLinkCtrl(self, -1, "EPSG Registry", URL="http://www.epsg-registry.org/")
+		link.SetBackgroundColour('#ffffff')
+		epsgsizer.Add(link, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 3)
+		self.sizer.Add(epsgsizer, 0, wx.EXPAND)
+		
+		# Search SpatialReference.org
+		searchsizer = wx.BoxSizer(wx.VERTICAL)
+		self.search = wx.SearchCtrl(self, style=wx.TE_PROCESS_ENTER)
+		searchsizer.Add(self.search, 1, wx.EXPAND|wx.BOTTOM, 4)
+		text = wx.StaticText(self, -1, 'Paste here the "OGC WKT" or "Proj4" definition or the URL:')
+		searchsizer.Add(text, 0, wx.ALIGN_CENTER|wx.TOP, 3)
+		# 'Paste here WKT definition or URL of the spatial reference system, like:\n'
+		self.sizer.Add(searchsizer, 0, wx.EXPAND|wx.ALL, 3)
+		
+		# UTM - Universal Transverse Mercator
+		utmsizer = wx.BoxSizer(wx.HORIZONTAL)
+		text = wx.StaticText(self, -1, 'UTM Zone:')
+		utmsizer.Add(text, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
+		self.utmzone = wx.lib.intctrl.IntCtrl(self, value=30, allow_none=True)
+		utmsizer.Add(self.utmzone, 1, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
+		self.north = wx.Choice(self, -1, choices = ['north','south'])
+		self.north.SetSelection(0)
+		utmsizer.Add(self.north, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
+		self.geogcs = wx.Choice(self, -1, choices = config.wellknowngeogcs)
+		self.geogcs.SetSelection(0)
+		utmsizer.Add(self.geogcs, 0, wx.EXPAND|wx.RIGHT, 3)
+		self.utmbutton = wx.Button(self, -1, "Set")
+		utmsizer.Add(self.utmbutton, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
+		self.sizer.Add(utmsizer, 0, wx.EXPAND|wx.ALL, 3)
+		
+		self.tc1 = wx.TextCtrl(self, -1, config.srs, style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+		self.sizer.Add(self.tc1, 1, wx.EXPAND|wx.ALL, 3)
+		self.bpreview = wx.Button(self, -1, "Preview the map reference with this SRS")
+		self.sizer.Add(self.bpreview, 0, wx.ALL, 3)
+
+		if config.srsformat != 3:
+			self.sizer.Hide(1, recursive=True) # EPSG
+		if config.srsformat != 4:
+			self.sizer.Hide(2, recursive=True) # Search
+		if config.srsformat != 2:
+			self.sizer.Hide(3, recursive=True) # UTM
+		self.sizer.Layout()
+
+		self.SetSizer(self.sizer)
+
+		self.Bind(wx.EVT_BUTTON, self.Set, self.utmbutton)
+		self.Bind(wx.EVT_BUTTON, self.Set, self.epsgbutton)
 		self.Bind(wx.EVT_BUTTON, self.Preview, self.bpreview)
+		self.Bind(wx.EVT_CHOICE, self.Choice, self.ch1)
+		self.Bind(wx.EVT_TEXT_ENTER, self.Search, self.search)
+		self.Bind(wx.EVT_SEARCHCTRL_SEARCH_BTN, self.Search, self.search)		
+
+	def Search(self, evt):
+		what = self.search.GetValue()
+		what += " PROJCS"
+		webbrowser.open_new("http://www.spatialreference.org/ref/?search=%s" % what)
+
+	def Choice(self, evt):
+		ch = self.ch1.GetSelection()
+		if ch==0: # Custom
+			self.SetValue(config.customsrs)
+			self.sizer.Hide(1, recursive=True) # EPSG
+			self.sizer.Hide(2, recursive=True) # Search
+			self.sizer.Hide(3, recursive=True) # UTM
+			self.sizer.Layout()
+		elif ch==1: # WGS84
+			self.SetValue(config.epsg4326)
+			self.sizer.Hide(1, recursive=True) # EPSG
+			self.sizer.Hide(2, recursive=True) # Search
+			self.sizer.Hide(3, recursive=True) # UTM
+			self.sizer.Layout()
+		elif ch==2: # UTM
+			self.SetValue('')
+			self.sizer.Hide(1, recursive=True) # EPSG
+			self.sizer.Hide(2, recursive=True) # Search
+			self.sizer.Show(3, recursive=True) # UTM
+			self.sizer.Layout()
+		elif ch==3: # EPSG
+			self.SetValue('')
+			self.sizer.Show(1, recursive=True) # EPSG
+			self.sizer.Hide(2, recursive=True) # Search
+			self.sizer.Hide(3, recursive=True) # UTM
+			self.sizer.Layout()
+		elif ch==4: # Search
+			self.SetValue('')
+			self.sizer.Hide(1, recursive=True) # EPSG
+			self.sizer.Show(2, recursive=True) # Search
+			self.sizer.Hide(3, recursive=True) # UTM
+			self.sizer.Layout()
+		
+	def Set(self, evt):
+		try:
+			from osgeo import osr
+			osr.UseExceptions()
+			source = osr.SpatialReference()
+			# 0 = Custom
+			if self.GetSelection() == 1: # WGS84
+				self.SetValue(config.epsg4326)
+			elif self.GetSelection() == 2: # UTM
+				source.SetProjCS( "%s / UTM Zone %s%s" % (config.wellknowngeogcs[self.geogcs.GetSelection()], self.utmzone.GetValue(), ['N','S'][self.north.GetSelection()] ));
+				source.SetWellKnownGeogCS( config.wellknowngeogcs[self.geogcs.GetSelection()] );
+				source.SetUTM( self.utmzone.GetValue(), (self.north.GetSelection()==0) );
+				self.SetValue(source.ExportToPrettyWkt())
+			elif self.GetSelection() == 3: # EPSG
+				if self.epsgesri.GetSelection() == 0:
+					source.ImportFromEPSG( self.epsgcode.GetValue() )
+				else:
+					source.ImportFromESRI( self.epsgcode.GetValue() )
+				self.SetValue(source.ExportToPrettyWkt())
+		except Exception, error:
+			wx.MessageBox("%s" % error , "The SRS definition is not correct", wx.ICON_ERROR)
 		
 
 	def Preview(self, evt):
-		if True:
-		#try:
+		try:
 			from gdalpreprocess import SRSInput
-			srs = SRSInput(self.GetSelection(), self.GetValue())
+			srs = SRSInput(self.GetValue())
 			filerecord = config.files[0]
 			T = filerecord[3]
 			xsize, ysize = filerecord[4:6]
@@ -299,8 +414,8 @@ class SpatialReferencePanel(wx.Panel):
 			lrx, lry = trans.TransformPoint(T[0] + T[1]*xsize + T[2]*ysize, T[3] + T[4]*xsize + T[5]*ysize )[:2]
 			webbrowser.open_new("http://www.maptiler.org/preview/?points=%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f" % 
 				(uly, ulx, ury, urx, lry, lrx, lly, llx))
-		#except Exception, error:
-		#	wx.MessageBox("%s" % error , "The SRS definition is not correct", wx.ICON_ERROR)
+		except Exception, error:
+			wx.MessageBox("%s" % error , "The SRS definition is not correct", wx.ICON_ERROR)
 
 	def SetValue(self, value):
 		self.tc1.SetValue(value)
