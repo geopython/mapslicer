@@ -1,33 +1,32 @@
 MapTiler ChangeLog
 ==================
 
-1.0 Alpha
----------
-- Alpha 1: 15 Jan 2009
-Initial public version
-- Alpha 2: 16 Jan 2009
-Bugfixing
-Initial installer for Windows and Mac
-Version ready for testing
+1.0 Alpha 3: 26 Jan 2009
+-----------------------
 
-Planned features:
+- Spatial Reference step rewrote - custom SRS supported from WKT, EPSG, ...
+- Polygon preview of the map reference on Google Maps
+- Georeference by NSEW: North South East West
+- ECW SDK distributed in Microsoft Windows
+- Automation of the packaging and installers (setup.py - also for Mac)
+- Bugfixing - Moving between steps, troubles with custom SRS, binary distribution
+- Text of the steps rewritten for skipping (in the future versions)
+- Language corrections - thanks to Chris Fleet
 
-- Alpha 3: 23 Jan 2009
-Bugfixing - Moving between steps, Spatial Reference corrections
-Georeference by NSEW: North South East West
-Preview of the spatial reference:  http://www.maptiler.org/preview/?points=50,19,50,21.5,49,21.4,49,19
-ECW in Microsoft Windows
-Automation of the installers (setup.py - also for Mac)
+1.0 Alpha 2: 16 Jan 2009
+------------------------
+- Bugfixing
+- Initial installer for Windows and Mac
+- Version ready for testing
 
-1.0 Beta xxx
---------
-All basic functionality is available in the GUI
-and there are no important bugs
-Removed warning screen
-Language corrections
+1.0 Alpha 1: 15 Jan 2009
+------------------------
+- Initial public version
 
-1.0 xxx
--------
-- Merging of the files is available (problem: files with GCP georeference)
-- Setting up of the NODATA color is possible (dependency: GDAL 1.6.1)
+FUTURE:
+=======
+1.0 target
+----------
+- Merging of several files should be possible (problem: files with GCP georeference)
+- Choosing of the NODATA color is possible (dependency: GDAL 1.6.1)
 - Warping corrections applied: problems with warping of the whole earth solved

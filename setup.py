@@ -34,8 +34,8 @@ if sys.platform in ['win32','win64']:
 
 	)
 
-# py2app - semi-standalone binary for Leopard-only with dependency on the Kyngchaos GDAL 1.6 Framework
-# if you need Universal binary ('fat' - around 160 MB) then check deploy/macosx/setup.py
+# py2app - creates 'fat' standalone Universal binary - with size around 160MB :-(
+# Use 'Build Applet.app' for small Leopard-only bundle with dependency on the Kyngchaos GDAL 1.6 Framework
 if sys.platform == 'darwin':
 	from setuptools import setup
 	import py2app
@@ -45,17 +45,17 @@ if sys.platform == 'darwin':
 	    options=dict(
 	        py2app=dict(
 	            iconfile='resources/maptiler.icns',
-	            excludes='wx,osgeo,PIL,numpy',
-	            semi_standalone=True,
-	            use_pythonpath=True,
+	            packages='wx',
+	            excludes='osgeo,PIL,numpy',
 	            resources=['resources/license/LICENSE.txt','maptiler'],
 	            plist=dict(
 	                CFBundleName               = "MapTiler",
-	                CFBundleShortVersionString = version.replace(' ','.'),     # must be in X.X.X format
+	                CFBundleShortVersionString = version.replace(' ','.'),
 	                CFBundleGetInfoString      = "MapTiler %s" % version,
 	                CFBundleExecutable         = "MapTiler",
 	                CFBundleIdentifier         = "cz.klokan.maptiler",
 	            ),
+	            frameworks=['PROJ.framework','GEOS.framework','SQLite3.framework','UnixImageIO.framework','GDAL.framework'],
 	        ),
 	    ),
 	    app=[ 'maptiler.py' ]

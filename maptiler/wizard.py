@@ -321,18 +321,18 @@ Please add information related to the selected viewers.
 Title of the map:<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="title"></wxp>
 <p>
-Copyright notice:<br/>
+Copyright notice (optional):<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="copyright"></wxp>
 <p>
 <font color="#DC5309" size="large"><b>The API keys for online maps API viewers</b></font>
 <p>
-Google Maps API key:<br/>
+Google Maps API key (optional):<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="googlekey"></wxp>
 <font size="-1">
 Note: You can get it <a href="http://code.google.com/apis/maps/signup.html">online at this address</a>.
 </font>
 <p>
-Yahoo Application ID key:<br/>
+Yahoo Application ID key (optional):<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="yahookey"></wxp>
 <font size="-1">
 Note: You can get it <a href="http://developer.yahoo.com/wsregapp/">at this webpage</a>.
@@ -391,7 +391,7 @@ Even a small amount helps!
 <p>
 VISA, MasterCard, American Express and other forms of payment as well as PayPal are available.
 <p>
-<a href="http://www.maptiler.org/support/">Support MapTiler project by donating money</a>
+<a href="http://www.maptiler.org/support/">Say "Thank you" by a small donation for further development</a>
 </center>
 """
 
