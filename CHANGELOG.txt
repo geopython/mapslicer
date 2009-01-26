@@ -4,14 +4,14 @@ MapTiler ChangeLog
 1.0 Alpha 3: 26 Jan 2009
 -----------------------
 
-- Spatial Reference step rewrote - custom SRS supported from WKT, EPSG, ...
-- Polygon preview of the map reference on Google Maps
-- Georeference by NSEW: North South East West
+- Spatial Reference step rewritten - custom SRS supported from WKT, EPSG, online-search by name...
+- Polygon preview of the map reference with Google Maps
+- Georeference by NSEW: North South East West (idea - Pamela Fox)
 - ECW SDK distributed in Microsoft Windows
 - Automation of the packaging and installers (setup.py - also for Mac)
 - Bugfixing - Moving between steps, troubles with custom SRS, binary distribution
 - Text of the steps rewritten for skipping (in the future versions)
-- Language corrections - thanks to Chris Fleet
+- English language corrections - thanks to Chris Fleet
 
 1.0 Alpha 2: 16 Jan 2009
 ------------------------
