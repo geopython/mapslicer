@@ -647,11 +647,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 						  help="Zoom levels to render (format:'2-5' or '10').")
 		p.add_option('-e', '--resume', dest="resume", action="store_true",
 						  help="Resume mode. Generate only missing files.")
-		# TODO: NODATA: ds.GetRasterBand(i).SetNoDataValue( float(null_value) )
-		# But this would have to be done on in memory VRT - created by CreateCopy()
-		# Let's do that together with merging of files later...
-		#p.add_option('-n', '--srcnodata', dest="srcnodata", metavar="NODATA",
-		#				  help="NODATA transparency value to assign to the input data")
+		p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
+			  			  help="NODATA transparency value to assign to the input data")
 		p.add_option("-v", "--verbose",
 						  action="store_true", dest="verbose",
 						  help="Print status messages to stdout")
@@ -739,6 +736,15 @@ gdal2tiles temp.vrt""" % self.input )
 		for i in range(1, self.in_ds.RasterCount+1):
 			if self.in_ds.GetRasterBand(i).GetNoDataValue() != None:
 				self.in_nodata.append( self.in_ds.GetRasterBand(i).GetNoDataValue() )
+		if self.options.srcnodata:
+			nds = map( float, self.options.srcnodata.split(','))
+			if len(nds) < self.in_ds.RasterCount:
+				self.in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
+			else:
+				self.in_nodata = nds
+
+		if self.options.verbose:
+			print "NODATA: %s" % self.in_nodata
 
 		#
 		# Here we should have RGBA input dataset opened in self.in_ds
@@ -818,9 +824,9 @@ gdal2tiles temp.vrt""" % self.input )
 							s = s.replace("""<BandMapping src="%i" dst="%i"/>""" % ((i+1),(i+1)),"""<BandMapping src="%i" dst="%i">
 	      <SrcNoDataReal>%i</SrcNoDataReal>
 	      <SrcNoDataImag>0</SrcNoDataImag>
-	      <DstNoDataReal>255</DstNoDataReal>
+	      <DstNoDataReal>%i</DstNoDataReal>
 	      <DstNoDataImag>0</DstNoDataImag>
-	    </BandMapping>""" % ((i+1), (i+1), self.in_nodata[i] )) # Not always white: , self.in_nodata[i]))
+	    </BandMapping>""" % ((i+1), (i+1), self.in_nodata[i], self.in_nodata[i])) # Or rewrite to white by: , 255 ))
 						# save the corrected VRT
 						open(tempfilename,"w").write(s)
 						# open by GDAL as self.out_ds
@@ -1364,7 +1370,9 @@ gdal2tiles temp.vrt""" % self.input )
 
 					self.scale_query_to_tile(dsquery, dstile, tilefilename)
 					# Write a copy of tile to png/jpg
-					self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
+					if self.options.resampling != 'antialias':
+						# Write a copy of tile to png/jpg
+						self.out_drv.CreateCopy(tilefilename, dstile, strict=0)
 
 					if self.options.verbose:
 						print "\tbuild from zoom", tz+1," tiles:", (2*tx, 2*ty), (2*tx+1, 2*ty),(2*tx, 2*ty+1), (2*tx+1, 2*ty+1)
@@ -1448,13 +1456,13 @@ gdal2tiles temp.vrt""" % self.input )
 			array = numpy.zeros((querysize, querysize, tilebands), numpy.uint8)
 			for i in range(tilebands):
 				array[:,:,i] = gdalarray.BandReadAsArray(dsquery.GetRasterBand(i+1), 0, 0, querysize, querysize)
-			if tilebands == 4:
-				im = Image.fromarray(array, 'RGBA')
-			else:
-				im = Image.fromarray(array, 'RGB')
+			im = Image.fromarray(array, 'RGBA') # Always four bands
 			im1 = im.resize((tilesize,tilesize), Image.ANTIALIAS)
+			if os.path.exists(tilefilename):
+				im0 = Image.open(tilefilename)
+				im1 = Image.composite(im1, im0, im1) 
 			im1.save(tilefilename,self.tiledriver)
-
+			
 		else:
 
 			# Other algorithms are implemented by gdal.ReprojectImage().
