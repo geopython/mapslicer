@@ -1040,8 +1040,8 @@ gdal2tiles temp.vrt""" % self.input )
 					pixelsizey = (2**(self.tmaxz-z) * self.out_gt[1]) # Y-pixel size in level (usually -1*pixelsizex)
 					west = self.out_gt[0] + x*self.tilesize*pixelsizex
 					east = west + self.tilesize*pixelsizex
-					north = self.out_gt[3] - (self.tminmax[z][3]-y)*self.tilesize*pixelsizey
-					south = north - self.tilesize*pixelsizey
+					south = self.ominy + y*self.tilesize*pixelsizex
+					north = south + self.tilesize*pixelsizex
 					if not self.isepsg4326:
 						# Transformation to EPSG:4326 (WGS84 datum)
 						west, south = self.ct.TransformPoint(west, south)[:2]
@@ -1546,6 +1546,13 @@ gdal2tiles temp.vrt""" % self.input )
 			tilekml = True
 			args['title'] = "%d/%d/%d.kml" % (tz, tx, ty)
 			args['south'], args['west'], args['north'], args['east'] = self.tileswne(tx, ty, tz)
+
+		if tx == 0: 
+			args['drawOrder'] = 2 * tz + 1 
+		elif tx != None: 
+			args['drawOrder'] = 2 * tz
+		else:
+			args['drawOrder'] = 0
 			
 		url = self.options.url
 		if not url:
@@ -1553,7 +1560,7 @@ gdal2tiles temp.vrt""" % self.input )
 				url = "../../"
 			else:
 				url = ""
-
+				
 		s = """<?xml version="1.0" encoding="utf-8"?>
 	<kml xmlns="http://earth.google.com/kml/2.1">
 	  <Document>
@@ -1579,7 +1586,7 @@ gdal2tiles temp.vrt""" % self.input )
 	      </LatLonAltBox>
 	    </Region>
 	    <GroundOverlay>
-	      <drawOrder>%(tz)d</drawOrder>
+	      <drawOrder>%(drawOrder)d</drawOrder>
 	      <Icon>
 	        <href>%(ty)d.%(tileformat)s</href>
 	      </Icon>
