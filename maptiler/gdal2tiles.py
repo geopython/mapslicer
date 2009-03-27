@@ -1892,8 +1892,11 @@ gdal2tiles temp.vrt""" % self.input )
 			       var ge = object;
 
 			       if (ge) {
+			           var url = document.location.toString();
+			           url = url.substr(0,url.lastIndexOf('/'))+'/doc.kml';
 			           var link = ge.createLink("");
-			           link.setHref("%(publishurl)s/doc.kml");
+			           if ("%(publishurl)s") { link.setHref("%(publishurl)s/doc.kml") }
+			           else { link.setHref(url) };
 			           var networkLink = ge.createNetworkLink("");
 			           networkLink.setName("TMS Map Overlay");
 			           networkLink.setFlyToView(true);  
