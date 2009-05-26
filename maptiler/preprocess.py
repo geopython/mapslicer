@@ -117,7 +117,7 @@ class file_info:
 
 		return True
 
-	def write_source(self, t_fh, t_geotransform, xsize, ysize, s_band):
+	def write_source(self, t_fh, t_geotransform, xsize, ysize, s_band, nodata = None):
 		t_ulx = t_geotransform[0]
 		t_uly = t_geotransform[3]
 		t_lrx = t_geotransform[0] + xsize * t_geotransform[1]
@@ -175,7 +175,8 @@ class file_info:
 			t_fh.write('\t\t\t<SourceBand>1</SourceBand>\n')
 		else:
 			t_fh.write('\t\t\t<SourceBand>%i</SourceBand>\n' % s_band)
-			
+		if self.palette and nodata:
+			t_fh.write('\t\t<NoData>%f</NoData>\n' % nodata[s_band])
 		t_fh.write('\t\t\t<SourceProperties RasterXSize="%i" RasterYSize="%i" DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n' \
 			% (self.xsize, self.ysize, self.datatypename, self.blocksizex, self.blocksizey))
 		t_fh.write('\t\t\t<SrcRect xOff="%i" yOff="%i" xSize="%i" ySize="%i"/>\n' \
@@ -375,7 +376,7 @@ def Preprocess(argv):
 					file_infos[0].color_interps[band]))
 
 		for fi in file_infos:
-			fi.write_source(t_fh, geotransform, xsize, ysize, band)
+			fi.write_source(t_fh, geotransform, xsize, ysize, band, nodata)
 
 		t_fh.write('\t</VRTRasterBand>\n')		
 
