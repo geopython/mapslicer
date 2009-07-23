@@ -12,9 +12,19 @@ import icons
 import wizard
 import widgets
 
+import wxgdal2tiles as wxgdal
 
 # TODO: GetText
 from config import _
+
+GENERIC_GUI_EVENT = wx.NewEventType()
+EVT_GENERIC_GUI = wx.PyEventBinder(GENERIC_GUI_EVENT, 0)
+
+class GenericGuiEvent(wx.PyEvent):
+	def __init__(self, data=None):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(GENERIC_GUI_EVENT)
+		self.data = data
 
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
@@ -56,6 +66,9 @@ class MainFrame(wx.Frame):
 		item = menu.Append(wx.ID_ABOUT, _("&About"))
 		self.Bind(wx.EVT_MENU, self.OnAbout, item)
 		self.main_frame_menubar.Append(menu, _("&Help"))
+
+		self.Bind(EVT_GENERIC_GUI, self.updateRenderText)
+		self.Bind(wxgdal.EVT_UPDATE_PROGRESS, self.updateProgress)
 
 		self.SetMenuBar(self.main_frame_menubar)
 
@@ -363,6 +376,13 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 
 		return params
 
+	def updateRenderText(self, event):
+		# do all of this stuff on the GUI thread
+		self.html.UpdateRenderText(event.data)
+
+	def updateProgress(self, event):
+		# do all of this stuff on the GUI thread
+		self.html.UpdateRenderProgress(event.progress)
 
 	def _resultProducer(self, jobID, abortEvent, params):
 
@@ -371,26 +391,25 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		if self.resume and params[0] != '--resume':
 			params.insert(0, '--resume')
 
-		from wxgdal2tiles import wxGDAL2Tiles
-		self.g2t = wxGDAL2Tiles( params )
-		self.g2t.setProgressObject( self.html )
+		self.g2t = wxgdal.wxGDAL2Tiles( params )
+		self.g2t.setEventHandler( self )
 
-		self.html.UpdateRenderText("Opening the input files")
+		wx.PostEvent(self, GenericGuiEvent("Opening the input files"))
 		self.g2t.open_input()
 		# Opening and preprocessing of the input file
 
 		if not self.g2t.stopped and not abortEvent():
-			self.html.UpdateRenderText("Generating viewers and metadata")
+			wx.PostEvent(self, GenericGuiEvent("Generating viewers and metadata"))
 			# Generation of main metadata files and HTML viewers
 			self.g2t.generate_metadata()
 
 		if not self.g2t.stopped and not abortEvent():
-			self.html.UpdateRenderText("Rendering the base tiles")
+			wx.PostEvent(self, GenericGuiEvent(_("Rendering the base tiles")))
 			# Generation of the lowest tiles
 			self.g2t.generate_base_tiles()
 
 		if not self.g2t.stopped and not abortEvent():
-			self.html.UpdateRenderText("Rendering the overview tiles in the pyramid")
+			wx.PostEvent(self, GenericGuiEvent("Rendering the overview tiles in the pyramid"))
 			# Generation of the overview tiles (higher in the pyramid)
 			self.g2t.generate_overview_tiles()
 	
@@ -404,7 +423,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			return
 
 		if not self.g2t.stopped:
-			self.html.UpdateRenderText("Task is finished!")
+			wx.PostEvent(self, GenericGuiEvent("Task is finished!"))
 			self.SetStep(9)
 			self.rendering = False
 			self.resume = False
