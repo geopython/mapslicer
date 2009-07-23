@@ -15,7 +15,7 @@ import widgets
 import wxgdal2tiles as wxgdal
 
 # TODO: GetText
-from config import _
+_ = lambda s: s
 
 GENERIC_GUI_EVENT = wx.NewEventType()
 EVT_GENERIC_GUI = wx.PyEventBinder(GENERIC_GUI_EVENT, 0)
@@ -167,11 +167,11 @@ class MainFrame(wx.Frame):
 	def OnAbout(self, event):
 		# First we create and fill the info object
 		info = wx.AboutDialogInfo()
-		info.Name = "MapTiler"
+		info.Name = _("MapTiler")
 		info.Version = config.version
 		info.Copyright = u"(C) 2008 Klokan Petr Přidal"
-		info.Description =	"""MapTiler is a powerful tool for online map publishing and generation of raster overlay mashups.
-Your geodata are transformed to the tiles compatible with Google Maps and Earth - ready for uploading to your webserver."""
+		info.Description = _("""MapTiler is a powerful tool for online map publishing and generation of raster overlay mashups.
+Your geodata are transformed to the tiles compatible with Google Maps and Earth - ready for uploading to your webserver.""")
 
 		#info.WebSite = ("http://www.maptiler.org/", "MapTiler HomePage")
 		#info.Developers = [ "Joe Programmer", "Jane Coder", "Vippy the Mascot" ]
@@ -191,7 +191,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 
 	def OnOpen(self, event):
 		dlg = wx.FileDialog(
-			self, message="Choose a file",
+			self, message=_("Choose a file"),
 			defaultDir=config.documentsdir,
 			defaultFile="",
 			wildcard=config.supportedfiles,
@@ -211,9 +211,9 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		self.SetStep(2)
 
 	def OnPrefs(self, event):
-		dlg = wx.MessageDialog(self, "This would be an preferences Dialog\n"
-									 "If there were any preferences to set.\n",
-								"Preferences", wx.OK | wx.ICON_INFORMATION)
+		dlg = wx.MessageDialog(self, _("This would be an preferences Dialog\n")+
+									 _("If there were any preferences to set.\n"),
+								_("Preferences"), wx.OK | wx.ICON_INFORMATION)
 		dlg.ShowModal()
 		dlg.Destroy()
 
@@ -245,7 +245,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 				self.button_back.SetLabel(_("Go &Back"))
 		if step == 9:
 			self.button_back.SetLabel(_("Go &Back"))
-			self.button_continue.SetLabel("Exit")
+			self.button_continue.SetLabel(_("Exit"))
 			self.button_continue.Enable()
 			
 		# Enable / Disable
@@ -276,10 +276,10 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		step = self.html.GetActiveStep()
 		if step == 2:
 			if len(config.files) == 0:
-				wx.MessageBox("""You have to add some files for rendering""", "No files specified", wx.ICON_ERROR)
+				wx.MessageBox(_("""You have to add some files for rendering"""), _("No files specified"), wx.ICON_ERROR)
 				return
 			if config.files[0][1] == '' and config.profile != 'raster':
-				wx.MessageBox("""Sorry the file you have specified does not have georeference.\n\nClick on the 'Georeference' button and give a bounding box or \ncreate a world file (.wld) for the specified file.""", "Missing georeference", wx.ICON_ERROR)
+				wx.MessageBox(_("""Sorry the file you have specified does not have georeference.\n\nClick on the 'Georeference' button and give a bounding box or \ncreate a world file (.wld) for the specified file."""), _("Missing georeference"), wx.ICON_ERROR)
 				return
 		if step == 3:
 			self.html.SaveStep(3)
@@ -291,11 +291,11 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 					from gdalpreprocess import SRSInput
 					srs = SRSInput(config.srs)
 				except Exception, error:
-					wx.MessageBox("""%s""" % error , "The SRS definition is not correct", wx.ICON_ERROR)
+					wx.MessageBox("""%s""" % error , _("The SRS definition is not correct"), wx.ICON_ERROR)
 					return
 				print srs
 				if not srs:
-					wx.MessageBox("""You have to specify reference system of your coordinates.\n\nTIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'""", "Not valid spatial reference system", wx.ICON_ERROR)
+					wx.MessageBox(_("""You have to specify reference system of your coordinates.\n\nTIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'"""), _("Not valid spatial reference system"), wx.ICON_ERROR)
 					return
 				else:
 					config.srs = srs
@@ -312,7 +312,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		filename = filename.encode('utf8')
 		
 		if len(config.files) > 0:
-			wx.MessageBox("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered.""", "MapTiler: Not yet implemented :-(", wx.ICON_ERROR)
+			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
 
 		from gdalpreprocess import singlefile
 		filerecord = singlefile(filename)
@@ -326,12 +326,12 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		self.abortEvent.set()
 		self.rendering = False
 		self.resume = True
-		self.html.UpdateRenderText("Rendering stopped !!!!")
+		self.html.UpdateRenderText(_("Rendering stopped !!!!"))
 			
 	def _renderstart(self):
 		self.abortEvent.clear()
 		self.rendering = True
-		self.html.UpdateRenderText("Started...")
+		self.html.UpdateRenderText(_("Started..."))
 		self.jobID += 1
 		
 		params = self.createParams()
@@ -394,12 +394,12 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		self.g2t = wxgdal.wxGDAL2Tiles( params )
 		self.g2t.setEventHandler( self )
 
-		wx.PostEvent(self, GenericGuiEvent("Opening the input files"))
+		wx.PostEvent(self, GenericGuiEvent(_("Opening the input files")))
 		self.g2t.open_input()
 		# Opening and preprocessing of the input file
 
 		if not self.g2t.stopped and not abortEvent():
-			wx.PostEvent(self, GenericGuiEvent("Generating viewers and metadata"))
+			wx.PostEvent(self, GenericGuiEvent(_("Generating viewers and metadata")))
 			# Generation of main metadata files and HTML viewers
 			self.g2t.generate_metadata()
 
@@ -409,7 +409,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			self.g2t.generate_base_tiles()
 
 		if not self.g2t.stopped and not abortEvent():
-			wx.PostEvent(self, GenericGuiEvent("Rendering the overview tiles in the pyramid"))
+			wx.PostEvent(self, GenericGuiEvent(_("Rendering the overview tiles in the pyramid")))
 			# Generation of the overview tiles (higher in the pyramid)
 			self.g2t.generate_overview_tiles()
 	
@@ -423,7 +423,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			return
 
 		if not self.g2t.stopped:
-			wx.PostEvent(self, GenericGuiEvent("Task is finished!"))
+			#wx.PostEvent(self, GenericGuiEvent(_("Task is finished!")))
 			self.SetStep(9)
 			self.rendering = False
 			self.resume = False

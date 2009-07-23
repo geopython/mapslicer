@@ -62,6 +62,7 @@ if __name__ == "__main__":
 	# TODO: GetText
 	#import gettext
 	#gettext.install("maptiler")
+	_ = lambda s: s
 
 	# TODO: Parse command line arguments:
 	# for both batch processing and initialization of the GUI
@@ -77,26 +78,26 @@ if __name__ == "__main__":
 	except ImportError:
 		# TODO: Platform specific error messages - are part of the GUI...
 		if sys.platform == 'darwin':
-			wx.MessageBox("""GDAL 1.6 framework is not found in your system!\n
+			wx.MessageBox(_("""GDAL 1.6 framework is not found in your system!\n
 Please install GDAL framework from the website:
-http://www.kyngchaos.com/software:frameworks""", "Error: GDAL Framework not found!", wx.ICON_ERROR)
+http://www.kyngchaos.com/software:frameworks"""), _("Error: GDAL Framework not found!"), wx.ICON_ERROR)
 			import webbrowser
 			webbrowser.open_new("http://www.kyngchaos.com/software:frameworks#gdal")
 			sys.exit(1)
 		elif sys.platform in ['win32','win64']:
-			wx.MessageBox("""GDAL 1.6 library is not found in your system!\n
+			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n
 If you used the installer then please report this problem as an issue at:
-http://code.google.com/p/maptiler/issues""", "Error: GDAL library not found!", wx.ICON_ERROR)
+http://code.google.com/p/maptiler/issues"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
 			sys.exit(1)
 		elif sys.platform == 'linux':
-			wx.MessageBox("""GDAL 1.6 library is not found in your system!\n
+			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n
 Please install it as a package in your distribution or from the source code:
-http://trac.osgeo.org/gdal/wiki/BuildHints""", "Error: GDAL library not found!", wx.ICON_ERROR)
+http://trac.osgeo.org/gdal/wiki/BuildHints"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
 			sys.exit(1)
-		print "GDAL library not available - please install GDAL and it's python module!"
+		print _("GDAL library not available - please install GDAL and it's python module!")
 
 	app.Show()
-	wx.MessageBox("""This is a development version of MapTiler application.
+	wx.MessageBox(_("""This is a development version of MapTiler application.
 It has known bugs and limits.\n
-It is not for production use but for testing and preview!""", "MapTiler Alpha version (%s)" % __version__, wx.OK | wx.ICON_INFORMATION)
+It is not for production use but for testing and preview!"""), _("MapTiler Alpha version (%s)") % __version__, wx.OK | wx.ICON_INFORMATION)
 	app.MainLoop()

@@ -1,0 +1,511 @@
+# Translations template for PROJECT.
+# Copyright (C) 2009 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2009-07-23 13:43+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.4\n"
+
+#: maptiler/config.py:34
+msgid "Supported raster files"
+msgstr ""
+
+#: maptiler/config.py:35
+msgid "TIFF / BigTIFF / GeoTIFF (.tif)"
+msgstr ""
+
+#: maptiler/config.py:36
+msgid "BSB Nautical Chart Format (.kap)"
+msgstr ""
+
+#: maptiler/config.py:37
+msgid "JPEG2000 - JPEG 2000 (.jp2, .j2k)"
+msgstr ""
+
+#: maptiler/config.py:38
+msgid "MrSID - Multi-resolution Seamless Image Database (.sid)"
+msgstr ""
+
+#: maptiler/config.py:39
+msgid "ECW - ERMapper Compressed Wavelets (.ecw)"
+msgstr ""
+
+#: maptiler/config.py:40
+msgid "HFA - Erdas Imagine Images (.img)"
+msgstr ""
+
+#: maptiler/config.py:41
+msgid "NITF - National Imagery Transmission Format (.nitf)"
+msgstr ""
+
+#: maptiler/config.py:42
+msgid "NDF - NLAPS Data Format (.h1,.h2,.hd)"
+msgstr ""
+
+#: maptiler/config.py:43
+msgid "MFF - Vexcel MFF Raster (.hdr)"
+msgstr ""
+
+#: maptiler/config.py:44
+msgid "INGR - Intergraph Raster Format (.cit,.rgb,..)"
+msgstr ""
+
+#: maptiler/config.py:45
+msgid "EIR -- Erdas Imagine Raw (.raw)"
+msgstr ""
+
+#: maptiler/config.py:46
+msgid "BLX -- Magellan BLX Topo File Format (.blx)"
+msgstr ""
+
+#: maptiler/config.py:47
+msgid "JPEG - Joint Photographic Experts Group JFIF (.jpg)"
+msgstr ""
+
+#: maptiler/config.py:48
+msgid "PNG - Portable Network Graphics (.png)"
+msgstr ""
+
+#: maptiler/config.py:49
+msgid "GIF - Graphics Interchange Format (.gif)"
+msgstr ""
+
+#: maptiler/config.py:50
+msgid "BMP - Microsoft Windows Device Independent Bitmap (.bmp)"
+msgstr ""
+
+#: maptiler/config.py:51
+msgid "WMS - GDAL driver for OGC Web Map Server (.wms)"
+msgstr ""
+
+#: maptiler/config.py:52
+msgid "VRT - GDAL Virtual Raster (.vrt)"
+msgstr ""
+
+#: maptiler/config.py:53
+msgid "All files (*.*)"
+msgstr ""
+
+#: maptiler/config.py:66
+msgid "Custom definition of the system (WKT, Proj.4,..)"
+msgstr ""
+
+#: maptiler/config.py:67
+msgid "WGS84 - Latitude and longitude (geodetic)"
+msgstr ""
+
+#: maptiler/config.py:68
+msgid "Universal Transverse Mercator - UTM (projected)"
+msgstr ""
+
+#: maptiler/config.py:69
+msgid "Specify the id-number from the EPSG/ESRI database"
+msgstr ""
+
+#: maptiler/config.py:70
+msgid "Search the coordinate system by name"
+msgstr ""
+
+#: maptiler/config.py:74
+msgid "SRSCustom0"
+msgstr ""
+
+#: maptiler/config.py:74
+msgid "SRSDefinition0"
+msgstr ""
+
+#: maptiler/config.py:75
+msgid "SRSCustom1"
+msgstr ""
+
+#: maptiler/config.py:75
+msgid "SRSDefinition1"
+msgstr ""
+
+#: maptiler/config.py:76
+msgid "SRSCustom2"
+msgstr ""
+
+#: maptiler/config.py:76
+msgid "SRSDefinition2"
+msgstr ""
+
+#: maptiler/config.py:77
+msgid "SRSCustom3"
+msgstr ""
+
+#: maptiler/config.py:77
+msgid "SRSDefinition3"
+msgstr ""
+
+#: maptiler/config.py:78
+msgid "SRSCustom4"
+msgstr ""
+
+#: maptiler/config.py:78
+msgid "SRSDefinition4"
+msgstr ""
+
+#: maptiler/config.py:79
+msgid "SRSCustom5"
+msgstr ""
+
+#: maptiler/config.py:79
+msgid "SRSDefinition5"
+msgstr ""
+
+#: maptiler/config.py:80
+msgid "SRSCustom6"
+msgstr ""
+
+#: maptiler/config.py:80
+msgid "SRSDefinition6"
+msgstr ""
+
+#: maptiler/config.py:81
+msgid "SRSCustom7"
+msgstr ""
+
+#: maptiler/config.py:81
+msgid "SRSDefinition7"
+msgstr ""
+
+#: maptiler/config.py:82
+msgid "SRSCustom8"
+msgstr ""
+
+#: maptiler/config.py:82
+msgid "SRSDefinition8"
+msgstr ""
+
+#: maptiler/config.py:83
+msgid "SRSCustom9"
+msgstr ""
+
+#: maptiler/config.py:83
+msgid "SRSDefinition9"
+msgstr ""
+
+#: maptiler/main.py:51
+msgid "Insert &raster map files"
+msgstr ""
+
+#: maptiler/main.py:55
+msgid "&Exit"
+msgstr ""
+
+#: maptiler/main.py:57
+msgid "&File"
+msgstr ""
+
+#: maptiler/main.py:60
+msgid "Online &Help && FAQ"
+msgstr ""
+
+#: maptiler/main.py:62
+msgid "MapTiler user &group"
+msgstr ""
+
+#: maptiler/main.py:64
+msgid "Project &website"
+msgstr ""
+
+#: maptiler/main.py:66
+msgid "&About"
+msgstr ""
+
+#: maptiler/main.py:68
+msgid "&Help"
+msgstr ""
+
+#: maptiler/main.py:82
+msgid "Tile Profile"
+msgstr ""
+
+#: maptiler/main.py:83
+msgid "Source Data Files"
+msgstr ""
+
+#: maptiler/main.py:84
+msgid "Spatial Reference"
+msgstr ""
+
+#: maptiler/main.py:85
+msgid "Tile Details"
+msgstr ""
+
+#: maptiler/main.py:86
+msgid "Destination"
+msgstr ""
+
+#: maptiler/main.py:87
+msgid "Viewers"
+msgstr ""
+
+#: maptiler/main.py:88
+msgid "Viewer Details"
+msgstr ""
+
+#: maptiler/main.py:89
+msgid "Rendering"
+msgstr ""
+
+#: maptiler/main.py:91 maptiler/main.py:113
+msgid "MapTiler - Map Tile Generator for Mashups"
+msgstr ""
+
+#: maptiler/main.py:93
+msgid "http://www.maptiler.org/"
+msgstr ""
+
+#: maptiler/main.py:94
+msgid "(C) 2008 - Klokan Petr Přidal"
+msgstr ""
+
+#: maptiler/main.py:96 maptiler/main.py:235 maptiler/main.py:242
+#: maptiler/main.py:245 maptiler/main.py:247
+msgid "Go &Back"
+msgstr ""
+
+#: maptiler/main.py:98 maptiler/main.py:234
+msgid "&Continue"
+msgstr ""
+
+#: maptiler/main.py:170
+msgid "MapTiler"
+msgstr ""
+
+#: maptiler/main.py:173
+msgid ""
+"MapTiler is a powerful tool for online map publishing and generation of "
+"raster overlay mashups.\n"
+"Your geodata are transformed to the tiles compatible with Google Maps and"
+" Earth - ready for uploading to your webserver."
+msgstr ""
+
+#: maptiler/main.py:184
+msgid "http://www.maptiler.org"
+msgstr ""
+
+#: maptiler/main.py:187
+msgid "http://groups.google.com/group/maptiler"
+msgstr ""
+
+#: maptiler/main.py:190
+msgid "http://help.maptiler.org"
+msgstr ""
+
+#: maptiler/main.py:194 maptiler/widgets.py:137
+msgid "Choose a file"
+msgstr ""
+
+#: maptiler/main.py:214
+msgid "This would be an preferences Dialog\n"
+msgstr ""
+
+#: maptiler/main.py:215
+msgid "If there were any preferences to set.\n"
+msgstr ""
+
+#: maptiler/main.py:216
+msgid "Preferences"
+msgstr ""
+
+#: maptiler/main.py:238 maptiler/main.py:244
+msgid "&Render"
+msgstr ""
+
+#: maptiler/main.py:239
+msgid "&Stop"
+msgstr ""
+
+#: maptiler/main.py:241
+msgid "&Resume"
+msgstr ""
+
+#: maptiler/main.py:248
+msgid "Exit"
+msgstr ""
+
+#: maptiler/main.py:279
+msgid "You have to add some files for rendering"
+msgstr ""
+
+#: maptiler/main.py:279
+msgid "No files specified"
+msgstr ""
+
+#: maptiler/main.py:282
+msgid ""
+"Sorry the file you have specified does not have georeference.\n"
+"\n"
+"Click on the 'Georeference' button and give a bounding box or \n"
+"create a world file (.wld) for the specified file."
+msgstr ""
+
+#: maptiler/main.py:282
+msgid "Missing georeference"
+msgstr ""
+
+#: maptiler/main.py:294 maptiler/widgets.py:398 maptiler/widgets.py:421
+msgid "The SRS definition is not correct"
+msgstr ""
+
+#: maptiler/main.py:298
+msgid ""
+"You have to specify reference system of your coordinates.\n"
+"\n"
+"TIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'"
+msgstr ""
+
+#: maptiler/main.py:298
+msgid "Not valid spatial reference system"
+msgstr ""
+
+#: maptiler/main.py:315 maptiler/widgets.py:120
+msgid ""
+"Unfortunately the merging of files is not yet implemented in the MapTiler"
+" GUI. Only the first file in the list is going to be rendered."
+msgstr ""
+
+#: maptiler/main.py:315 maptiler/widgets.py:120
+msgid "Not yet implemented :-("
+msgstr ""
+
+#: maptiler/main.py:329
+msgid "Rendering stopped !!!!"
+msgstr ""
+
+#: maptiler/main.py:334
+msgid "Started..."
+msgstr ""
+
+#: maptiler/main.py:397
+msgid "Opening the input files"
+msgstr ""
+
+#: maptiler/main.py:402
+msgid "Generating viewers and metadata"
+msgstr ""
+
+#: maptiler/main.py:407
+msgid "Rendering the base tiles"
+msgstr ""
+
+#: maptiler/main.py:412
+msgid "Rendering the overview tiles in the pyramid"
+msgstr ""
+
+#: maptiler/main.py:426
+msgid "Task is finished!"
+msgstr ""
+
+#: maptiler/widgets.py:36
+msgid "Error opening file\n"
+msgstr ""
+
+#: maptiler/widgets.py:39
+msgid "Cannot open non ascii files\n"
+msgstr ""
+
+#: maptiler/widgets.py:47
+msgid "Filename"
+msgstr ""
+
+#: maptiler/widgets.py:48 maptiler/widgets.py:101
+msgid "Georeference"
+msgstr ""
+
+#: maptiler/widgets.py:169
+#, python-format
+msgid ""
+"Please specify bounding box for '%s' as 4 numbers\n"
+"Format: 'north south east west'\n"
+"\n"
+"Alternatively you can create a world file (.wld) or (.tab) by an external"
+" GIS software"
+msgstr ""
+
+#: maptiler/widgets.py:170
+msgid "Georeference with bounding box"
+msgstr ""
+
+#: maptiler/widgets.py:210
+msgid "Set transparency for a color (NODATA):"
+msgstr ""
+
+#: maptiler/widgets.py:288
+msgid "EPSG Registry"
+msgstr ""
+
+#: maptiler/widgets.py:297
+msgid "Paste here the \"OGC WKT\" or \"Proj4\" definition or the URL:"
+msgstr ""
+
+#: maptiler/widgets.py:304
+msgid "UTM Zone:"
+msgstr ""
+
+#: maptiler/widgets.py:314
+msgid "Set"
+msgstr ""
+
+#: maptiler/widgets.py:320
+msgid "Preview the map reference with this SRS"
+msgstr ""
+
+#: maptiler/widgets.py:387
+#, python-format
+msgid "%s / UTM Zone %s%s"
+msgstr ""
+
+#: maptiler/widgets.py:449
+msgid "Click on the 'Render' button to start the rendering..."
+msgstr ""
+
+#: maptiler/wizard.py:59
+msgid "GDAL2Tiles initialization failed"
+msgstr ""
+
+#: maptiler/wizard.py:155
+msgid "Nothing to update - progressbar not displayed"
+msgstr ""
+
+#: maptiler/wizard.py:163
+msgid "Nothing to update - progresstext not displayed"
+msgstr ""
+
+#: maptiler/wizard.py:171
+msgid "Selection of the tile profile"
+msgstr ""
+
+#: maptiler/wizard.py:172
+msgid ""
+"MapTiler generates tiles for simple online publishing of maps. It offers "
+"several tile profiles - several approaches how to cut a map into small "
+"tiles."
+msgstr ""
+
+#: maptiler/wizard.py:174
+msgid "What kind of tiles would you like to generate?"
+msgstr ""
+
+#: maptiler/wizard.py:178
+msgid "Global Spherical Mercator (tiles a la Google Maps)"
+msgstr ""
+
+#: maptiler/wxgdal2tiles.py:25
+msgid "Rendering Error"
+msgstr ""
+

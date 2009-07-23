@@ -24,34 +24,33 @@ documentsdir = ""
 bboxgeoref = False
 
 
-# Placeholder for GetText
-def _(str):
-	return str
+# TODO: GetText
+_ = lambda s: s
 
 # WellKnownGeogCS
 wellknowngeogcs = ['WGS84','WGS72','NAD27','NAD83']
 
 # Subset of the GDAL supported file formats...
-supportedfiles =  "Supported raster files|*.tif;*.tiff;*.kap;*.img;*.sid;*.ecw;*.jp2;*.j2k;*.nitf;*.h1;*.h2;*.hd;*.hdr;*.cit;*.rgb;*.raw;*.blx;*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.wms;*.vrt|" \
-	"TIFF / BigTIFF / GeoTIFF (.tif)|*.tif;*.tiff|" \
-	"BSB Nautical Chart Format (.kap)|*.kap|" \
-	"JPEG2000 - JPEG 2000 (.jp2, .j2k)|*.jp2;*.j2k|" \
-	"MrSID - Multi-resolution Seamless Image Database (.sid)|*.sid|" \
-	"ECW - ERMapper Compressed Wavelets (.ecw)|*.ecw|" \
-	"HFA - Erdas Imagine Images (.img)|*.img|" \
-	"NITF - National Imagery Transmission Format (.nitf)|*.nitf|" \
-	"NDF - NLAPS Data Format (.h1,.h2,.hd)|*.h1;*.h2;*.hd|" \
-	"MFF - Vexcel MFF Raster (.hdr)|*.hdr|" \
-	"INGR - Intergraph Raster Format (.cit,.rgb,..)|*.cit;*.rgb|" \
-	"EIR -- Erdas Imagine Raw (.raw)|*.raw|" \
-	"BLX -- Magellan BLX Topo File Format (.blx)|*.blx|" \
-	"JPEG - Joint Photographic Experts Group JFIF (.jpg)|*.jpg;*.jpeg|" \
-	"PNG - Portable Network Graphics (.png)|*.png|" \
-	"GIF - Graphics Interchange Format (.gif)|*.gif|" \
-	"BMP - Microsoft Windows Device Independent Bitmap (.bmp)|*.bmp|" \
-	"WMS - GDAL driver for OGC Web Map Server (.wms)|*.wms|" \
-	"VRT - GDAL Virtual Raster (.vrt)|*.vrt|" \
-	"All files (*.*)|*.*"
+supportedfiles =  _("Supported raster files")+"|*.tif;*.tiff;*.kap;*.img;*.sid;*.ecw;*.jp2;*.j2k;*.nitf;*.h1;*.h2;*.hd;*.hdr;*.cit;*.rgb;*.raw;*.blx;*.jpg;*.jpeg;*.png;*.gif;*.bmp;*.wms;*.vrt|" + \
+	_("TIFF / BigTIFF / GeoTIFF (.tif)")+"|*.tif;*.tiff|" + \
+	_("BSB Nautical Chart Format (.kap)")+"|*.kap|" + \
+	_("JPEG2000 - JPEG 2000 (.jp2, .j2k)")+"|*.jp2;*.j2k|" + \
+	_("MrSID - Multi-resolution Seamless Image Database (.sid)")+"|*.sid|" + \
+	_("ECW - ERMapper Compressed Wavelets (.ecw)")+"|*.ecw|" + \
+	_("HFA - Erdas Imagine Images (.img)")+"|*.img|" + \
+	_("NITF - National Imagery Transmission Format (.nitf)")+"|*.nitf|" + \
+	_("NDF - NLAPS Data Format (.h1,.h2,.hd)")+"|*.h1;*.h2;*.hd|" + \
+	_("MFF - Vexcel MFF Raster (.hdr)")+"|*.hdr|" + \
+	_("INGR - Intergraph Raster Format (.cit,.rgb,..)")+"|*.cit;*.rgb|" + \
+	_("EIR -- Erdas Imagine Raw (.raw)")+"|*.raw|" + \
+	_("BLX -- Magellan BLX Topo File Format (.blx)")+"|*.blx|" + \
+	_("JPEG - Joint Photographic Experts Group JFIF (.jpg)")+"|*.jpg;*.jpeg|" + \
+	_("PNG - Portable Network Graphics (.png)")+"|*.png|" + \
+	_("GIF - Graphics Interchange Format (.gif)")+"|*.gif|" + \
+	_("BMP - Microsoft Windows Device Independent Bitmap (.bmp)")+"|*.bmp|" + \
+	_("WMS - GDAL driver for OGC Web Map Server (.wms)")+"|*.wms|" + \
+	_("VRT - GDAL Virtual Raster (.vrt)")+"|*.vrt|" + \
+	_("All files (*.*)")+"|*.*"
 
 s = """
 srsFormatList = ['format automatically detected',
@@ -64,24 +63,24 @@ srsFormatList = ['format automatically detected',
 """
 
 srsFormatList = [
-'Custom definition of the system (WKT, Proj.4,..)',
-'WGS84 - Latitude and longitude (geodetic)',
-'Universal Transverse Mercator - UTM (projected)',
-'Specify the id-number from the EPSG/ESRI database',
-'Search the coordinate system by name',
+_('Custom definition of the system (WKT, Proj.4,..)'),
+_('WGS84 - Latitude and longitude (geodetic)'),
+_('Universal Transverse Mercator - UTM (projected)'),
+_('Specify the id-number from the EPSG/ESRI database'),
+_('Search the coordinate system by name'),
 ]
 
 srsFormatListLocal = [
-'SRSCustom0',"SRSDefinition0",
-'SRSCustom1',"SRSDefinition1",
-'SRSCustom2',"SRSDefinition2",
-'SRSCustom3',"SRSDefinition3",
-'SRSCustom4',"SRSDefinition4",
-'SRSCustom5',"SRSDefinition5",
-'SRSCustom6',"SRSDefinition6",
-'SRSCustom7',"SRSDefinition7",
-'SRSCustom8',"SRSDefinition8",
-'SRSCustom9',"SRSDefinition9"
+_('SRSCustom0'),_("SRSDefinition0"),
+_('SRSCustom1'),_("SRSDefinition1"),
+_('SRSCustom2'),_("SRSDefinition2"),
+_('SRSCustom3'),_("SRSDefinition3"),
+_('SRSCustom4'),_("SRSDefinition4"),
+_('SRSCustom5'),_("SRSDefinition5"),
+_('SRSCustom6'),_("SRSDefinition6"),
+_('SRSCustom7'),_("SRSDefinition7"),
+_('SRSCustom8'),_("SRSDefinition8"),
+_('SRSCustom9'),_("SRSDefinition9")
 ]
 
 #English-speaking coordinate systems defaults:

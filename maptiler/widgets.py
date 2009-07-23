@@ -11,7 +11,10 @@ import wx.lib.intctrl
 import config
 import webbrowser
 
-from config import _, nodata
+from config import nodata
+
+# TODO: GetText
+_ = lambda s: s
 
 class FileDrop(wx.FileDropTarget):
 
@@ -30,10 +33,10 @@ class FileDrop(wx.FileDropTarget):
 				file.close()
 				self.target._add(name)
 			except IOError, error:
-				dlg = wx.MessageDialog(None, 'Error opening file\n' + str(error))
+				dlg = wx.MessageDialog(None, _('Error opening file\n') + str(error))
 				dlg.ShowModal()
 			except UnicodeDecodeError, error:
-				dlg = wx.MessageDialog(None, 'Cannot open non ascii files\n' + str(error))
+				dlg = wx.MessageDialog(None, _('Cannot open non ascii files\n') + str(error))
 				dlg.ShowModal()
 
 
@@ -95,7 +98,7 @@ class FilePanel(wx.Panel):
 		sizer.Add(bdown)
 		bdown.Disable()
 
-		bgeo = wx.Button(self, -1, "Georeference")
+		bgeo = wx.Button(self, -1, _("Georeference"))
 		sizer.Add(bgeo)
 		mainsizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 3)
 		
@@ -114,7 +117,7 @@ class FilePanel(wx.Panel):
 	def _add(self, filename):
 
 		if len(config.files) > 0:
-			wx.MessageBox("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered.""", "MapTiler: Not yet implemented :-(", wx.ICON_ERROR)
+			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
 		
 		filename = filename.encode('utf8')
 		from gdalpreprocess import singlefile
@@ -131,7 +134,7 @@ class FilePanel(wx.Panel):
 	
 	def onAdd(self, evt):
 		dlg = wx.FileDialog(
-			self, message="Choose a file",
+			self, message=_("Choose a file"),
 			defaultDir=config.documentsdir,
 			defaultFile="",
 			wildcard=config.supportedfiles,
@@ -163,8 +166,8 @@ class FilePanel(wx.Panel):
 	def onGeoreference(self, evt):
 		bbox = None
 		dlg = wx.TextEntryDialog(
-				self, "Please specify bounding box for '%s' as 4 numbers\nFormat: 'north south east west'\n\nAlternatively you can create a world file (.wld) or (.tab) by an external GIS software" % config.files[ self.lc.GetFirstSelected() ][0],
-				'Georeference with bounding box', '90 -90 180 -180')
+				self, _("Please specify bounding box for '%s' as 4 numbers\nFormat: 'north south east west'\n\nAlternatively you can create a world file (.wld) or (.tab) by an external GIS software") % config.files[ self.lc.GetFirstSelected() ][0],
+				_('Georeference with bounding box'), '90 -90 180 -180')
 
 		#dlg.SetValue("Python is the best!")
 
@@ -204,7 +207,7 @@ class NodataPanel(wx.Panel):
 		self.SetBackgroundColour('#ffffff')
 
 		sizer = wx.FlexGridSizer(cols=2, hgap=5)
-		self.ch1 = wx.CheckBox(self, -1, "Set transparency for a color (NODATA):")
+		self.ch1 = wx.CheckBox(self, -1, _("Set transparency for a color (NODATA):"))
 		sizer.Add(self.ch1)
 		
 		self.color = (0,0,0)
@@ -282,7 +285,7 @@ class SpatialReferencePanel(wx.Panel):
 		epsgsizer.Add(self.epsgcode, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
 		self.epsgbutton = wx.Button(self, -1, "Set")
 		epsgsizer.Add(self.epsgbutton, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
-		link = wx.lib.hyperlink.HyperLinkCtrl(self, -1, "EPSG Registry", URL="http://www.epsg-registry.org/")
+		link = wx.lib.hyperlink.HyperLinkCtrl(self, -1, _("EPSG Registry"), URL="http://www.epsg-registry.org/")
 		link.SetBackgroundColour('#ffffff')
 		epsgsizer.Add(link, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 3)
 		self.sizer.Add(epsgsizer, 0, wx.EXPAND)
@@ -291,14 +294,14 @@ class SpatialReferencePanel(wx.Panel):
 		searchsizer = wx.BoxSizer(wx.VERTICAL)
 		self.search = wx.SearchCtrl(self, style=wx.TE_PROCESS_ENTER)
 		searchsizer.Add(self.search, 1, wx.EXPAND|wx.BOTTOM, 4)
-		text = wx.StaticText(self, -1, 'Paste here the "OGC WKT" or "Proj4" definition or the URL:')
+		text = wx.StaticText(self, -1, _('Paste here the "OGC WKT" or "Proj4" definition or the URL:'))
 		searchsizer.Add(text, 0, wx.ALIGN_CENTER|wx.TOP, 3)
 		# 'Paste here WKT definition or URL of the spatial reference system, like:\n'
 		self.sizer.Add(searchsizer, 0, wx.EXPAND|wx.ALL, 3)
 		
 		# UTM - Universal Transverse Mercator
 		utmsizer = wx.BoxSizer(wx.HORIZONTAL)
-		text = wx.StaticText(self, -1, 'UTM Zone:')
+		text = wx.StaticText(self, -1, _('UTM Zone:'))
 		utmsizer.Add(text, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 3)
 		self.utmzone = wx.lib.intctrl.IntCtrl(self, value=30, allow_none=True)
 		utmsizer.Add(self.utmzone, 1, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
@@ -308,13 +311,13 @@ class SpatialReferencePanel(wx.Panel):
 		self.geogcs = wx.Choice(self, -1, choices = config.wellknowngeogcs)
 		self.geogcs.SetSelection(0)
 		utmsizer.Add(self.geogcs, 0, wx.EXPAND|wx.RIGHT, 3)
-		self.utmbutton = wx.Button(self, -1, "Set")
+		self.utmbutton = wx.Button(self, -1, _("Set"))
 		utmsizer.Add(self.utmbutton, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
 		self.sizer.Add(utmsizer, 0, wx.EXPAND|wx.ALL, 3)
 		
 		self.tc1 = wx.TextCtrl(self, -1, config.srs, style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
 		self.sizer.Add(self.tc1, 1, wx.EXPAND|wx.ALL, 3)
-		self.bpreview = wx.Button(self, -1, "Preview the map reference with this SRS")
+		self.bpreview = wx.Button(self, -1, _("Preview the map reference with this SRS"))
 		self.sizer.Add(self.bpreview, 0, wx.ALL, 3)
 
 		if config.srsformat != 3:
@@ -381,7 +384,7 @@ class SpatialReferencePanel(wx.Panel):
 			if self.GetSelection() == 1: # WGS84
 				self.SetValue(config.epsg4326)
 			elif self.GetSelection() == 2: # UTM
-				source.SetProjCS( "%s / UTM Zone %s%s" % (config.wellknowngeogcs[self.geogcs.GetSelection()], self.utmzone.GetValue(), ['N','S'][self.north.GetSelection()] ));
+				source.SetProjCS( _("%s / UTM Zone %s%s") % (config.wellknowngeogcs[self.geogcs.GetSelection()], self.utmzone.GetValue(), ['N','S'][self.north.GetSelection()] ));
 				source.SetWellKnownGeogCS( config.wellknowngeogcs[self.geogcs.GetSelection()] );
 				source.SetUTM( self.utmzone.GetValue(), (self.north.GetSelection()==0) );
 				self.SetValue(source.ExportToPrettyWkt())
@@ -392,7 +395,7 @@ class SpatialReferencePanel(wx.Panel):
 					source.ImportFromESRI( self.epsgcode.GetValue() )
 				self.SetValue(source.ExportToPrettyWkt())
 		except Exception, error:
-			wx.MessageBox("%s" % error , "The SRS definition is not correct", wx.ICON_ERROR)
+			wx.MessageBox("%s" % error , _("The SRS definition is not correct"), wx.ICON_ERROR)
 		
 
 	def Preview(self, evt):
@@ -415,7 +418,7 @@ class SpatialReferencePanel(wx.Panel):
 			webbrowser.open_new("http://www.maptiler.org/preview/?points=%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f" % 
 				(uly, ulx, ury, urx, lry, lrx, lly, llx))
 		except Exception, error:
-			wx.MessageBox("%s" % error , "The SRS definition is not correct", wx.ICON_ERROR)
+			wx.MessageBox("%s" % error , _("The SRS definition is not correct"), wx.ICON_ERROR)
 
 	def SetValue(self, value):
 		self.tc1.SetValue(value)
@@ -443,7 +446,7 @@ class ProgressPanel(wx.Panel):
 		vsizer.Add(self.g1, 1, wx.EXPAND|wx.ALL,0)
 
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.ptext = wx.StaticText(self, -1, "Click on the 'Render' button to start the rendering...")
+		self.ptext = wx.StaticText(self, -1, _("Click on the 'Render' button to start the rendering..."))
 		hsizer.Add(self.ptext, 1, wx.EXPAND|wx.ALL,3)
 		self.pnum = wx.StaticText(self,-1, "0 %")
 		hsizer.Add(self.pnum, 0, wx.EXPAND|wx.ALL,3)
