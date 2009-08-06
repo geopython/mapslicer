@@ -885,6 +885,10 @@ gdal2tiles temp.vrt""" % self.input )
 		# Here we should have a raster (out_ds) in the correct Spatial Reference system
 		#
 
+		# For raster with 4-bands: 4th unknown band set to alpha
+		if self.out_ds.RasterCount == 4 and self.out_ds.GetRasterBand(4).GetRasterColorInterpretation() == gdal.GCI_Undefined:
+			self.out_ds.GetRasterBand(4).SetRasterColorInterpretation(gdal.GCI_AlphaBand)
+
 		# Get alpha band (either directly or from NODATA value)
 		self.alphaband = self.out_ds.GetRasterBand(1).GetMaskBand()
 		if (self.alphaband.GetMaskFlags() & gdal.GMF_ALPHA) or self.out_ds.RasterCount==4 or self.out_ds.RasterCount==2:
