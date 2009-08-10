@@ -7,7 +7,6 @@ then
 fi
 
 PYTHON=`which python`
-DEPLOY=`realpath deploy/linux`
 SANDBOX=`mktemp -d`
 FILES="maptiler.py maptiler README.txt deploy/linux/maptiler.desktop \
        resources/icon.png"
