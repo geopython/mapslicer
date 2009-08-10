@@ -111,7 +111,7 @@ class MainFrame(wx.Frame):
 
 	def __set_properties(self):
 		self.SetTitle(_("MapTiler - Map Tile Generator for Mashups"))
-		if sys.platform in ['win32','win64','linux']:
+		if sys.platform in ['win32','win64'] or sys.platform.startswith('linux'):
 			self.SetIcon( icons.getIconIcon() )
 		self.SetBackgroundColour(wx.Colour(253, 253, 253))
 		for label in self.steplabel[1:]:

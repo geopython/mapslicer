@@ -89,7 +89,7 @@ http://www.kyngchaos.com/software:frameworks"""), _("Error: GDAL Framework not f
 If you used the installer then please report this problem as an issue at:
 http://code.google.com/p/maptiler/issues"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
 			sys.exit(1)
-		elif sys.platform == 'linux':
+		elif sys.platform.startswith('linux'):
 			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n
 Please install it as a package in your distribution or from the source code:
 http://trac.osgeo.org/gdal/wiki/BuildHints"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
