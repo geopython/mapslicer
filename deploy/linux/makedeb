@@ -1,0 +1,43 @@
+#!/bin/sh
+
+if [ ! -f maptiler.py  -o  ! -d maptiler ];
+then
+    echo "The script must be invoked from the maptiler root directory."
+    exit 1
+fi
+
+PYTHON=`which python`
+DEPLOY=`realpath deploy/linux`
+SANDBOX=`mktemp -d`
+FILES="maptiler.py maptiler README.txt deploy/linux/maptiler.desktop \
+       resources/icon.png"
+
+# get maptiler version
+VERSION=`$PYTHON -c 'import maptiler; print maptiler.version.replace(" ",".")'`
+
+# name the archive and directory according to debian policy
+ARCHNAME="MapTiler-$VERSION"
+
+# create sandbox
+mkdir "$SANDBOX/$ARCHNAME"
+
+# copy project files and archive in there
+tar cvzf "$SANDBOX/$ARCHNAME/$ARCHNAME.tar.gz" --exclude='.svn' --exclude='*.pyc' $FILES
+tar xzf "$SANDBOX/$ARCHNAME/$ARCHNAME.tar.gz" -C "$SANDBOX/$ARCHNAME"
+
+# copy our debian files as well
+cp -r deploy/linux/debian "$SANDBOX/$ARCHNAME"
+
+# update version and date
+CURDATE=`date -R`
+sed -i -e "s/\\\$VERSION/$VERSION/g" -e "s/\\\$DATE/$CURDATE/g" \
+    "$SANDBOX/$ARCHNAME/debian/changelog"
+
+# build the .deb
+(cd "$SANDBOX/$ARCHNAME"; dpkg-buildpackage -d)
+
+# copy it
+cp "$SANDBOX"/*.deb .
+
+# clean up
+rm -rf "$SANDBOX"

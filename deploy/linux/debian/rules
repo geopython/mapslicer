@@ -1,0 +1,65 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp 
+	dh_testdir
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	dh_clean 
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	mkdir -p $(CURDIR)/debian/maptiler
+
+	mkdir -p $(CURDIR)/debian/maptiler/usr/lib/maptiler
+	cp maptiler.py $(CURDIR)/debian/maptiler/usr/lib/maptiler
+	cp -r maptiler $(CURDIR)/debian/maptiler/usr/lib/maptiler
+
+	mkdir -p $(CURDIR)/debian/maptiler/usr/bin
+	ln -s /usr/lib/maptiler/maptiler.py $(CURDIR)/debian/maptiler/usr/bin/maptiler
+	#chmod a+x $(CURDIR)/debian/maptiler/usr/bin/maptiler
+
+	mkdir -p $(CURDIR)/debian/maptiler/usr/share/maptiler
+	cp -r resources/* $(CURDIR)/debian/maptiler/usr/share/maptiler
+
+	mkdir -p $(CURDIR)/debian/maptiler/usr/share/applications
+	cp deploy/linux/maptiler.desktop $(CURDIR)/debian/maptiler/usr/share/applications
+
+	mkdir -p $(CURDIR)/debian/maptiler/usr/share/doc/maptiler
+	cp README.txt $(CURDIR)/debian/maptiler/usr/share/doc/maptiler
+
+
+binary-indep: build install
+
+binary-arch: build install
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Icon=/usr/share/maptiler/icon.png
+Name=MapTiler
+Comment=Map Tile Generator for Mashups
+Exec=/usr/bin/maptiler
+Terminal=false
+Type=Application
+Categories=Graphics;
+StartupNotify=false

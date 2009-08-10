@@ -1,0 +1,8 @@
+maptiler ($VERSION) unstable; urgency=low
+
+  * Release. 
+
+    This is a debianized version of Maptiler from Subversion.
+    http://www.maptiler.org/
+
+ -- Václav "Keo" Klusák <keo@keo.cz>  $DATE
