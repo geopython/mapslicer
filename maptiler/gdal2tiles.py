@@ -1568,8 +1568,8 @@ gdal2tiles temp.vrt""" % self.input )
 		s = """<?xml version="1.0" encoding="utf-8"?>
 	<kml xmlns="http://earth.google.com/kml/2.1">
 	  <Document>
-	    <Name>%(title)s</Name>
-	    <Description></Description>
+	    <name>%(title)s</name>
+	    <description></description>
 	    <Style>
 	      <ListStyle id="hideChildren">
 	        <listItemType>checkHideChildren</listItemType>
@@ -1623,7 +1623,6 @@ gdal2tiles temp.vrt""" % self.input )
 	      <Link>
 	        <href>%s%d/%d/%d.kml</href>
 	        <viewRefreshMode>onRegion</viewRefreshMode>
-	        <viewFormat/>
 	      </Link>
 	    </NetworkLink>
 	""" % (cz, cx, cy, args['tileformat'], args['minlodpixels'], cnorth, csouth, ceast, cwest, url, cz, cx, cy)
