@@ -620,6 +620,9 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		
 		# KML generation
 		self.kml = self.options.kml
+		if self.options.kml_depth:
+			self.kml_depth = int(self.options.kml_depth)
+			assert self.kml_depth > 0
 
 		# Output the results
 
@@ -661,6 +664,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 						  help="Avoid automatic generation of KML files for EPSG:4326")
 		g.add_option("-u", "--url", dest='url',
 						  help="URL address where the generated tiles are going to be published")
+		g.add_option('-d', '--kml-depth', dest="kml_depth",
+						  help="How many levels to store before linking, default 1.")
 		p.add_option_group(g)
 
 		# HTML options
@@ -1124,17 +1129,14 @@ gdal2tiles temp.vrt""" % self.input )
 		if self.kml:
 			# TODO: Maybe problem for not automatically generated tminz
 			# The root KML should contain links to all tiles in the tminz level
-			children = []
-			xmin, ymin, xmax, ymax = self.tminmax[self.tminz]
-			for x in range(xmin, xmax+1):
-				for y in range(ymin, ymax+1):
-					children.append( [ x, y, self.tminz ] ) 
+			minx, miny, maxx, maxy = self.tminmax[self.tminz]
+			children = (self.generate_link_kml(x, y, self.tminz, root=True)
+						for x in range(minx, maxx+1) for y in range(miny, maxy+1))
+
 			# Generate Root KML
-			if self.kml:
-				if not self.options.resume or not os.path.exists(os.path.join(self.output, 'doc.kml')):
-					f = open(os.path.join(self.output, 'doc.kml'), 'w')
-					f.write( self.generate_kml( None, None, None, children) )
-					f.close()
+			f = open(os.path.join(self.output, 'doc.kml'), 'w')
+			f.write( self.generate_doc_kml( self.options.title, "\n".join(children) ))
+			f.close()
 		
 	# -------------------------------------------------------------------------
 	def generate_base_tiles(self):
@@ -1174,6 +1176,9 @@ gdal2tiles temp.vrt""" % self.input )
 		#print tcount
 		ti = 0
 		
+		if self.kml:
+			self.kml_tiles = {}
+
 		tz = self.tmaxz
 		for ty in range(tmaxy, tminy-1, -1): #range(tminy, tmaxy+1):
 			for tx in range(tminx, tmaxx+1):
@@ -1287,11 +1292,14 @@ gdal2tiles temp.vrt""" % self.input )
 
 				# Create a KML file for this tile.
 				if self.kml:
-					kmlfilename = os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty)
-					if not self.options.resume or not os.path.exists(kmlfilename):
+					if self.kml_depth == 1 or self.tmaxz == self.tminz:
+						kmlfilename = os.path.join(self.output, str(tz), str(tx), '%d.kml' % ty)
 						f = open( kmlfilename, 'w')
-						f.write( self.generate_kml( tx, ty, tz ))
+						f.write( self.generate_doc_kml( "t", self.generate_node_kml(tx, ty, tz, []) ) )
 						f.close()
+						self.kml_tiles[tx,ty] = self.generate_link_kml(tx, ty, tz)
+					else:
+						self.kml_tiles[tx,ty] = self.generate_leaf_kml(tx, ty, tz)
 					
 				if not self.options.verbose:
 					self.progressbar( ti / float(tcount) )
@@ -1316,6 +1324,9 @@ gdal2tiles temp.vrt""" % self.input )
 		# querysize = tilesize * 2
 		
 		for tz in range(self.tmaxz-1, self.tminz-1, -1):
+			if self.kml:
+				kml_tiles = {}
+
 			tminx, tminy, tmaxx, tmaxy = self.tminmax[tz]
 			for ty in range(tmaxy, tminy-1, -1): #range(tminy, tmaxy+1):
 				for tx in range(tminx, tmaxx+1):
@@ -1370,7 +1381,8 @@ gdal2tiles temp.vrt""" % self.input )
 								dsquery.WriteRaster( tileposx, tileposy, self.tilesize, self.tilesize,
 									dsquerytile.ReadRaster(0,0,self.tilesize,self.tilesize),
 									band_list=range(1,tilebands+1))
-								children.append( [x, y, tz+1] )
+								if self.kml:
+									children.append(self.kml_tiles[x,y])
 
 					self.scale_query_to_tile(dsquery, dstile, tilefilename)
 					# Write a copy of tile to png/jpg
@@ -1383,13 +1395,21 @@ gdal2tiles temp.vrt""" % self.input )
 
 					# Create a KML file for this tile.
 					if self.kml:
-						f = open( os.path.join(self.output, '%d/%d/%d.kml' % (tz, tx, ty)), 'w')
-						f.write( self.generate_kml( tx, ty, tz, children ) )
-						f.close()
+						node_kml = self.generate_node_kml(tx, ty, tz, children)
+						if (self.tmaxz-tz + 1) % self.kml_depth == 0 or tz == self.tminz:
+							kmlrelpath = "%d/%d/%d.kml" % (tz, tx, ty)
+							f = open( os.path.join(self.output, kmlrelpath), 'w')
+							f.write( self.generate_doc_kml(kmlrelpath, node_kml) )
+							f.close()
+							kml_tiles[tx,ty] = self.generate_link_kml(tx, ty, tz)
+						else:
+							kml_tiles[tx,ty] = node_kml
 
 					if not self.options.verbose:
 						self.progressbar( ti / float(tcount) )
 
+			if self.kml:
+				self.kml_tiles = kml_tiles
 		
 	# -------------------------------------------------------------------------
 	def geo_query(self, ds, ulx, uly, lrx, lry, querysize = 0):
@@ -1527,10 +1547,26 @@ gdal2tiles temp.vrt""" % self.input )
 		return s
 			
 	# -------------------------------------------------------------------------
-	def generate_kml(self, tx, ty, tz, children = [], **args ):
-		"""
-		Template for the KML. Returns filled string.
-		"""
+	def generate_doc_kml(self, title, content, **args):
+		return """\
+<?xml version="1.0" encoding="utf-8"?>
+<kml xmlns="http://earth.google.com/kml/2.1">
+  <Document>
+    <name>%s</name>
+    <description></description>
+    <Style>
+      <ListStyle id="hideChildren">
+        <listItemType>checkHideChildren</listItemType>
+      </ListStyle>
+    </Style>
+%s
+  </Document>
+</kml>""" % (title, content)
+
+	def generate_node_kml(self, tx, ty, tz, children, **args):
+		return self.generate_leaf_kml(tx, ty, tz, "\n".join(children), **args)
+
+	def generate_leaf_kml(self, tx, ty, tz, content="", **args):
 		args['tx'], args['ty'], args['tz'] = tx, ty, tz
 		args['tileformat'] = self.tileext
 		if not args.has_key('tilesize'):
@@ -1540,98 +1576,86 @@ gdal2tiles temp.vrt""" % self.input )
 			args['minlodpixels'] = int( args['tilesize'] / 2 ) # / 2.56) # default 128
 		if not args.has_key('maxlodpixels'):
 			args['maxlodpixels'] = int( args['tilesize'] * 8 ) # 1.7) # default 2048 (used to be -1)
-		if children == []:
-			args['maxlodpixels'] = -1
-	
-		if tx==None:
-			tilekml = False
-			args['title'] = self.options.title
-		else:
-			tilekml = True
-			args['title'] = "%d/%d/%d.kml" % (tz, tx, ty)
-			args['south'], args['west'], args['north'], args['east'] = self.tileswne(tx, ty, tz)
 
-		if tx == 0: 
-			args['drawOrder'] = 2 * tz + 1 
-		elif tx != None: 
-			args['drawOrder'] = 2 * tz
+		if tx == 0:
+			args['drawOrder'] = 2 * tz + 1
 		else:
-			args['drawOrder'] = 0
-			
+			args['drawOrder'] = 2 * tz
+
+		args['south'], args['west'], args['north'], args['east'] = self.tileswne(tx, ty, tz)
+		args['content'] = content
+
+		if self.options.url:
+			args['url'] = self.options.url
+		else:
+			args['url'] = "../../"
+
+		return """\
+    <Folder>
+      <Region>
+        <Lod>
+          <minLodPixels>%(minlodpixels)d</minLodPixels>
+          <maxLodPixels>%(maxlodpixels)d</maxLodPixels>
+        </Lod>
+        <LatLonAltBox>
+          <north>%(north).14f</north>
+          <south>%(south).14f</south>
+          <east>%(east).14f</east>
+          <west>%(west).14f</west>
+        </LatLonAltBox>
+      </Region>
+      <GroundOverlay>
+        <drawOrder>%(drawOrder)d</drawOrder>
+        <Icon>
+          <href>%(url)s%(tz)d/%(tx)d/%(ty)d.%(tileformat)s</href>
+        </Icon>
+        <LatLonBox>
+          <north>%(north).14f</north>
+          <south>%(south).14f</south>
+          <east>%(east).14f</east>
+          <west>%(west).14f</west>
+        </LatLonBox>
+      </GroundOverlay>
+%(content)s
+    </Folder>""" % args
+
+	def generate_link_kml(self, tx, ty, tz, root=False, **args):
+		args['tileformat'] = self.tileext
+		if not args.has_key('tilesize'):
+			args['tilesize'] = self.tilesize
+		if not args.has_key('minlodpixels'):
+			args['minlodpixels'] = int( args['tilesize'] / 2 ) # / 2.56) # default 128
+
 		url = self.options.url
 		if not url:
-			if tilekml:
-				url = "../../"
-			else:
+			if root:
 				url = ""
-				
-		s = """<?xml version="1.0" encoding="utf-8"?>
-	<kml xmlns="http://earth.google.com/kml/2.1">
-	  <Document>
-	    <name>%(title)s</name>
-	    <description></description>
-	    <Style>
-	      <ListStyle id="hideChildren">
-	        <listItemType>checkHideChildren</listItemType>
-	      </ListStyle>
-	    </Style>""" % args
-		if tilekml:
-			s += """
-	    <Region>
-	      <Lod>
-	        <minLodPixels>%(minlodpixels)d</minLodPixels>
-	        <maxLodPixels>%(maxlodpixels)d</maxLodPixels>
-	      </Lod>
-	      <LatLonAltBox>
-	        <north>%(north).14f</north>
-	        <south>%(south).14f</south>
-	        <east>%(east).14f</east>
-	        <west>%(west).14f</west>
-	      </LatLonAltBox>
-	    </Region>
-	    <GroundOverlay>
-	      <drawOrder>%(drawOrder)d</drawOrder>
-	      <Icon>
-	        <href>%(ty)d.%(tileformat)s</href>
-	      </Icon>
-	      <LatLonBox>
-	        <north>%(north).14f</north>
-	        <south>%(south).14f</south>
-	        <east>%(east).14f</east>
-	        <west>%(west).14f</west>
-	      </LatLonBox>
-	    </GroundOverlay>
-	""" % args	
+			else:
+				url = "../../"
 
-		for cx, cy, cz in children:
-			csouth, cwest, cnorth, ceast = self.tileswne(cx, cy, cz)
-			s += """
-	    <NetworkLink>
-	      <name>%d/%d/%d.%s</name>
-	      <Region>
-	        <Lod>
-	          <minLodPixels>%d</minLodPixels>
-	          <maxLodPixels>-1</maxLodPixels>
-	        </Lod>
-	        <LatLonAltBox>
-	          <north>%.14f</north>
-	          <south>%.14f</south>
-	          <east>%.14f</east>
-	          <west>%.14f</west>
-	        </LatLonAltBox>
-	      </Region>
-	      <Link>
-	        <href>%s%d/%d/%d.kml</href>
-	        <viewRefreshMode>onRegion</viewRefreshMode>
-	      </Link>
-	    </NetworkLink>
-	""" % (cz, cx, cy, args['tileformat'], args['minlodpixels'], cnorth, csouth, ceast, cwest, url, cz, cx, cy)
+		tsouth, twest, tnorth, teast = self.tileswne(tx, ty, tz)
 
-		s += """	  </Document>
-	</kml>
-	"""
-		return s
-	
+		return """\
+    <NetworkLink>
+      <name>%d/%d/%d.%s</name>
+      <Region>
+        <Lod>
+          <minLodPixels>%d</minLodPixels>
+          <maxLodPixels>-1</maxLodPixels>
+        </Lod>
+        <LatLonAltBox>
+          <north>%.14f</north>
+          <south>%.14f</south>
+          <east>%.14f</east>
+          <west>%.14f</west>
+        </LatLonAltBox>
+      </Region>
+      <Link>
+        <href>%s%d/%d/%d.kml</href>
+        <viewRefreshMode>onRegion</viewRefreshMode>
+      </Link>
+    </NetworkLink>""" % (tz, tx, ty, args['tileformat'], args['minlodpixels'], tnorth, tsouth, teast, twest, url, tz, tx, ty)
+
 	# -------------------------------------------------------------------------
 	def generate_googlemaps(self):
 		"""
