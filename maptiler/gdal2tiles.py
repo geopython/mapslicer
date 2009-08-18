@@ -623,6 +623,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		if self.options.kml_depth:
 			self.kml_depth = int(self.options.kml_depth)
 			assert self.kml_depth > 0
+		else:
+			self.kml_depth = 1
 
 		# Output the results
 
