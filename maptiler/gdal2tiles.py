@@ -54,7 +54,7 @@ __version__ = "$Id: gdal2tiles.py 15748 2008-11-17 16:30:54Z klokan $"
 
 resampling_list = ('average','near','bilinear','cubic','cubicspline','lanczos','antialias')
 tile_formats_list = ('png', 'jpeg', 'hybrid')
-profile_list = ('mercator','geodetic','raster') #,'zoomify')
+profile_list = ('mercator','geodetic','raster','gearth') #,'zoomify')
 webviewer_list = ('all','google','openlayers','none')
 
 format_extension = {
@@ -604,7 +604,10 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 
 		# Tile format.
 		if self.options.tile_format is None:
-			self.options.tile_format = 'png'
+			if self.options.profile == 'gearth':
+				self.options.tile_format = 'hybrid'
+			else:
+				self.options.tile_format = 'png'
 
 		# We don't support webviewers with hybrid trees yet.
 		if self.options.tile_format == 'hybrid' and self.options.webviewer != 'none':
@@ -631,7 +634,10 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 			self.kml_depth = int(self.options.kml_depth)
 			assert self.kml_depth > 0
 		else:
-			self.kml_depth = 1
+			if self.options.profile == 'gearth':
+				self.kml_depth = 3
+			else:
+				self.kml_depth = 1
 
 		# Output the results
 
@@ -796,7 +802,7 @@ gdal2tiles temp.vrt""" % self.input )
 
 		if self.options.profile == 'mercator':
 			self.out_srs.ImportFromEPSG(900913)
-		elif self.options.profile == 'geodetic':
+		elif self.options.profile in ('geodetic', 'gearth'):
 			self.out_srs.ImportFromEPSG(4326)
 		else:
 			self.out_srs = self.in_srs
@@ -805,7 +811,7 @@ gdal2tiles temp.vrt""" % self.input )
 
 		self.out_ds = None
 		
-		if self.options.profile in ('mercator', 'geodetic'):
+		if self.options.profile in ('mercator', 'geodetic', 'gearth'):
 						
 			if (self.in_ds.GetGeoTransform() == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)) and (self.in_ds.GetGCPCount() == 0):
 				self.error("There is no georeference - neither affine transformation (worldfile) nor GCPs. You can generate only 'raster' profile tiles.",
@@ -1017,7 +1023,7 @@ gdal2tiles temp.vrt""" % self.input )
 			if self.options.verbose:
 				print "Bounds (latlong):", self.ominx, self.ominy, self.omaxx, self.omaxy
 					
-		if self.options.profile == 'raster':
+		if self.options.profile in ('raster', 'gearth'):
 			
 			log2 = lambda x: math.log10(x) / math.log10(2) # log2 (base 2 logarithm)
 			
@@ -1127,7 +1133,8 @@ gdal2tiles temp.vrt""" % self.input )
 
 
 		# Generate tilemapresource.xml.
-		if self.options.tile_format != 'hybrid' and (not self.options.resume or not os.path.exists(os.path.join(self.output, 'tilemapresource.xml'))):
+		if (self.options.tile_format != 'hybrid' and self.options.profile != 'gearth'
+			and (not self.options.resume or not os.path.exists(os.path.join(self.output, 'tilemapresource.xml')))):
 			f = open(os.path.join(self.output, 'tilemapresource.xml'), 'w')
 			f.write( self.generate_tilemapresource())
 			f.close()
@@ -1195,7 +1202,7 @@ gdal2tiles temp.vrt""" % self.input )
 
 					rx, ry, rxsize, rysize = rb
 					wx, wy, wxsize, wysize = wb
-				else: # 'raster' profile:
+				else: # 'raster' or 'gearth' profile:
 					
 					tsize = int(self.tsize[tz]) # tilesize in raster coordinates for actual zoom
 					xsize = self.out_ds.RasterXSize # size of the raster in pixels
