@@ -2024,7 +2024,7 @@ gdal2tiles temp.vrt""" % self.input )
 	            switcherControl.maximizeControl();
 
 	            map.zoomToExtent( mapBounds );
-			"""
+			""" % args
 			
 		elif self.options.profile == 'raster':
 			s += """
