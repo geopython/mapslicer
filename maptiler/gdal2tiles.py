@@ -2013,7 +2013,7 @@ gdal2tiles temp.vrt""" % self.input )
 	            var tmsoverlay = new OpenLayers.Layer.TMS( "TMS Overlay", "",
 	                {
 	                    serviceVersion: '.', layername: '.', alpha: %(has_alpha)s,
-						type: '%(tileformat)', getURL: overlay_getTileURL,
+						type: '%(tileformat)s', getURL: overlay_getTileURL,
 						isBaseLayer: false
 	                });
 	            map.addLayer(tmsoverlay);
