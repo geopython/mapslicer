@@ -59,8 +59,7 @@ webviewer_list = ('all','google','openlayers','none')
 
 format_extension = {
 	"PNG" : "png",
-	"JPEG" : "jpg",
-	"DUMMY" : "nil"
+	"JPEG" : "jpg"
 }
 
 format_mime = {
@@ -1311,7 +1310,7 @@ gdal2tiles temp.vrt""" % self.input )
 		for ty in range(tminy, tmaxy+1):
 			for tx in range(tminx, tmaxx+1):
 				image_format = self.image_output.try_to_use_existing_tile(tx, ty, tz)
-				if image_format is None or image_format == "DUMMY":
+				if image_format is None:
 					continue
 
 				d = self.get_kml_dict(tx, ty, tz, image_format)
@@ -1328,7 +1327,7 @@ gdal2tiles temp.vrt""" % self.input )
 			for ty in range(tminy, tmaxy+1):
 				for tx in range(tminx, tmaxx+1):
 					image_format = self.image_output.try_to_use_existing_tile(tx, ty, tz)
-					if image_format is None or image_format == "DUMMY":
+					if image_format is None:
 						continue
 
 					d = self.get_kml_dict(tx, ty, tz, image_format)
@@ -2323,7 +2322,7 @@ class BaseImageOutput(object):
 		for y in range(2*ty, 2*ty + 2):
 			for x in range(2*tx, 2*tx + 2):
 				image_format = self.try_to_use_existing_tile(x, y, tz+1)
-				if image_format is not None and image_format != "DUMMY":
+				if image_format is not None:
 					yield x, y, image_format
 
 	def read_alpha(self, xyzzy):
@@ -2374,14 +2373,13 @@ class HybridImageOutput(BaseImageOutput):
 	"""
 
 	def __init__(self, out_ds, tile_size, resampler, nodata, output_dir):
-		BaseImageOutput.__init__(self, out_ds, tile_size, resampler, nodata, output_dir, ["JPEG", "PNG", "DUMMY"])
+		BaseImageOutput.__init__(self, out_ds, tile_size, resampler, nodata, output_dir, ["JPEG", "PNG"])
 
 	def write_base_tile(self, tx, ty, tz, xyzzy):
 		alpha = self.read_alpha(xyzzy)
 		transparent, opaque = self.transparent_or_opaque(alpha)
 
 		if transparent:
-			self.create_dummy(tx, ty, tz)
 			return
 		elif opaque:
 			image_format = "JPEG"
@@ -2395,7 +2393,6 @@ class HybridImageOutput(BaseImageOutput):
 		children = list(self.iter_children(tx, ty, tz))
 
 		if len(children) == 0:
-			self.create_dummy(tx, ty, tz)
 			return
 
 		if any(image_format == "PNG" for x, y, image_format in children) or len(children) < 4:
@@ -2412,11 +2409,6 @@ class HybridImageOutput(BaseImageOutput):
 			opaque = opaque and c == '\xff'
 		assert not (transparent and opaque)
 		return transparent, opaque
-
-	def create_dummy(self, tx, ty, tz):
-		path = self.get_full_path(tx, ty, tz, format_extension["DUMMY"])
-		ensure_dir_exists(path)
-		open(path, "w").close()
 
 
 def Resampler(name):
