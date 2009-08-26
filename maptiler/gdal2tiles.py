@@ -723,6 +723,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 	def open_input(self):
 		"""Initialization of the input raster, reprojection if necessary"""
 		
+		gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
 		gdal.AllRegister()
 
 		# Open the input file
