@@ -608,8 +608,14 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 			else:
 				self.options.tile_format = 'png'
 
+		# Webviewer default depends on tile format.
+		if self.options.webviewer is None:
+			if self.options.tile_format == 'hybrid':
+				self.options.webviewer = 'none'
+			else:
+				self.options.webviewer = 'all'
 		# We don't support webviewers with hybrid trees yet.
-		if self.options.tile_format == 'hybrid' and self.options.webviewer != 'none':
+		elif self.options.tile_format == 'hybrid' and self.options.webviewer != 'none':
 			print ("WARNING: hybrid tile format is incompatible with webviewers you selected (%s), " +
 				   "so they will not be created.") % self.options.webviewer
 			self.options.webviewer = "none"
@@ -705,7 +711,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		# p.add_option_group(g)
 
 		p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
-		webviewer='all', copyright='', resampling='average', resume=False,
+		copyright='', resampling='average', resume=False,
 		googlekey='INSERT_YOUR_KEY_HERE', yahookey='INSERT_YOUR_YAHOO_APP_ID_HERE')
 
 		self.parser = p
