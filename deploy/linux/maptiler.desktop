@@ -6,5 +6,5 @@ Comment=Map Tile Generator for Mashups
 Exec=/usr/bin/maptiler
 Terminal=false
 Type=Application
-Categories=Graphics;
+Categories=Geography;
 StartupNotify=false

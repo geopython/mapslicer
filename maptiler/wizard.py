@@ -3,21 +3,31 @@
 # TODO: Cleaning the code, refactoring before 1.0 publishing
 
 import os
+import sys
 import wx
 import wx.html
 import wx.lib.wxpTag
 import webbrowser
 import config
+import icons
+
+from wxgdal2tiles import wxGDAL2Tiles
 
 # TODO: GetText
 _ = lambda s: s
 
 class WizardHtmlWindow(wx.html.HtmlWindow):
-	def __init__(self, parent, id):
-		wx.html.HtmlWindow.__init__(self, parent, id, style=wx.html.HW_NO_SELECTION )
+	def __init__(self, parent, id, pos=wx.DefaultPosition, size = wx.DefaultSize ):
+		wx.html.HtmlWindow.__init__(self, parent, id, pos=pos, size=size, style=(wx.html.HW_NO_SELECTION |  wx.FULL_REPAINT_ON_RESIZE) )
 		if "gtk2" in wx.PlatformInfo:
 			self.SetStandardFonts()
+		self.parent = parent
 		self.step = 0
+
+		# add the donate image to the MemoryFileSystem:
+        mfs = wx.MemoryFSHandler()
+        wx.FileSystem_AddHandler(mfs)
+        mfs.AddFile("donatebtn.png", icons.getDonateBtnData(), wx.BITMAP_TYPE_PNG)
 
 	def OnLinkClicked(self, linkinfo):
 		webbrowser.open_new(linkinfo.GetHref())
@@ -37,6 +47,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			self.FindWindowByName(config.profile).SetValue(1)
 		elif step == 2:
 			pass
+			#self.FindWindowByName('nodatapanel').SetColor(config.nodata)
 		elif step == 3:
 			if not config.srs:
 				config.customsrs = config.files[0][6]
@@ -47,37 +58,109 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			self.FindWindowByName('srs').SetSelection(config.srsformat)
 			self.FindWindowByName('srs').SetValue(config.srs)
 		elif step == 4:
-			try:
-				from wxgdal2tiles import wxGDAL2Tiles
-				g2t = wxGDAL2Tiles(['--profile',config.profile,'--s_srs', config.srs, str(config.files[0][2]) ])
-				g2t.open_input()
-				config.tminz = g2t.tminz
-				config.tmaxz = g2t.tmaxz
-				config.kml = g2t.kml
-				del g2t
-			except Exception, error:
-				wx.MessageBox("%s" % error , _("GDAL2Tiles initialization failed"), wx.ICON_ERROR)
+			g2t = wxGDAL2Tiles(['--profile',config.profile,'--s_srs', config.srs, str(config.files[0][2]) ])
+			g2t.open_input()
+			config.tminz = g2t.tminz
+			config.tmaxz = g2t.tmaxz
+			config.kml = g2t.kml
+			del g2t
+
 			self.FindWindowByName('tminz').SetValue(config.tminz)
 			self.FindWindowByName('tmaxz').SetValue(config.tmaxz)
+
+			if config.profile == 'gearth':
+				self.FindWindowByName('format').SetItems( [
+					_("PNG - with transparency"),
+					_("JPEG - smaller but without transparency"),
+					_("Hybrid JPEG+PNG - only for Google Earth"),
+					_("Garmin Custom maps KMZ - 256 pixels"),
+					_("Garmin Custom maps KMZ - 512 pixels"),
+					_("Garmin Custom maps KMZ - 1024 pixels") ] )
+			else:
+				self.FindWindowByName('format').SetItems( [
+					_("PNG - with transparency"),
+					_("JPEG - smaller but without transparency"),
+					_("Hybrid JPEG+PNG - only for Google Earth") ] )
+
+			if not config.format and config.profile == 'gearth':
+				self.FindWindowByName('format').SetSelection(2) # hybrid
+			elif not config.format:
+				self.FindWindowByName('format').SetSelection(0) # png
+			else:
+				self.FindWindowByName('format').SetSelection({'png':0,'jpeg':1,'hybrid':2,'garmin256':3,'garmin512':4,'garmin1024':5}[config.format])
+
+			self.Refresh()
+			self.Update()
 		elif step == 5:
 			filename = config.files[0][0]
-			if config.outputdir == '':
-				config.outputdir = os.path.join( os.path.dirname(filename), os.path.splitext(os.path.basename( filename ))[0] )
+
+			# If this is the first time the user has gone this far,
+			# we try to come up with sensible default output directory.
+			if config.outputdir is None:
+				input_dir = os.path.dirname(filename)
+
+				# Implicitly we try to place it in the same directory in
+				# which the input file is located. But if this is not possible,
+				# we try to use the current directory.
+				if os.access(input_dir, os.W_OK):
+					base_dir = input_dir
+				else:
+					base_dir = os.getcwd()
+
+				# Default name is the same as the input file without extensions.
+				config.outputdir = os.path.join(base_dir, os.path.splitext(os.path.basename( filename ))[0] )
+
+				# GTK2 doesn't allow to select nonexisting directories, so we have to make it exist.
+				if sys.platform.startswith("linux"):
+					if not os.path.exists(config.outputdir):
+						try:
+							os.makedirs(config.outputdir)
+							config.gtk2_hack_directory = config.outputdir
+						except Exception, e:
+							config.outputdir = os.getcwd()
+							config.gtk2_hack_directory = None
+
+							# I hate it when I have to do this.
+							wx.MessageBox(_("""\
+We are terribly sorry for this error. It is a known issue stemming from the fact that we try hard to \
+support all major software platforms -- Microsoft Windos, Mac OS X and UNIX systems. Unfortunately \
+they don't have all the same capabilities.
+
+You are processing file '%s' for which we can't provide default output directory, because both our \
+options -- input file directory '%s' and your current working directory '%s' -- are not writeable. \
+Please select the output directory on your own.""") % (filename, input_dir, os.getcwd()),
+							_("Can't create default output directory"), wx.ICON_ERROR)
+					else:
+						config.gtk2_hack_directory = None
+
 			self.FindWindowByName('outputdir').SetPath(config.outputdir)
 		elif step == 6:
+			# GTK2 hack. See above.
+			if sys.platform.startswith("linux") and config.gtk2_hack_directory is not None:
+				if config.gtk2_hack_directory != config.outputdir:
+					try:
+						os.rmdir(config.gtk2_hack_directory)
+					except:
+						pass
+
+			not_hybrid = config.format != 'hybrid'
 			if config.profile=='mercator':
-				self.FindWindowByName('google').Enable(True)
-				self.FindWindowByName('openlayers').Enable(True)
+				self.FindWindowByName('google').Enable(not_hybrid)
+				self.FindWindowByName('openlayers').Enable(not_hybrid)
 				self.FindWindowByName('kml').Enable(True)
 			elif config.profile=='geodetic':
 				self.FindWindowByName('google').Enable(False)
-				self.FindWindowByName('openlayers').Enable(True)
+				self.FindWindowByName('openlayers').Enable(not_hybrid)
 				self.FindWindowByName('kml').Enable(True)
 			elif config.profile=='raster':
 				self.FindWindowByName('google').Enable(False)
-				self.FindWindowByName('openlayers').Enable(True)
+				self.FindWindowByName('openlayers').Enable(not_hybrid)
 				if not config.kml:
 					self.FindWindowByName('kml').Enable(False)
+			elif config.profile=='gearth':
+				self.FindWindowByName('google').Enable(False)
+				self.FindWindowByName('openlayers').Enable(not_hybrid)
+				self.FindWindowByName('kml').Enable(True)
 				
 			self.FindWindowByName('google').SetValue(config.google)
 			self.FindWindowByName('openlayers').SetValue(config.openlayers)
@@ -95,19 +178,12 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 			# Profile
 			if self.FindWindowByName('mercator').GetValue():
 				config.profile = 'mercator'
-				config.google = True
-				config.openlayers = True
-				config.kml = False
 			elif self.FindWindowByName('geodetic').GetValue():
 				config.profile = 'geodetic'
-				config.google = False
-				config.openlayers = True
-				config.kml = True
 			elif self.FindWindowByName('raster').GetValue():
 				config.profile = 'raster'
-				config.google = False
-				config.openlayers = True
-				config.kml = False
+			elif self.FindWindowByName('gearth').GetValue():
+				config.profile = 'gearth'
 			print config.profile
 		elif step == 2:
 			# Files + Nodata
@@ -122,8 +198,21 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 		elif step == 4:
 			config.tminz = int(self.FindWindowByName('tminz').GetValue())
 			config.tmaxz = int(self.FindWindowByName('tmaxz').GetValue())
+
+			format = self.FindWindowByName('format').GetCurrentSelection()
+			config.format = ('png','jpeg','hybrid','garmin256','garmin512','garmin1024')[format]
+
+			if config.format != 'hybrid':
+				config.google = config.profile == 'mercator'
+				config.openlayers = True
+			else:
+				config.google = False
+				config.openlayers = False
+			config.kml = config.profile in ('gearth', 'geodetic')
+
 			print config.tminz
 			print config.tmaxz
+			print config.format
 		elif step == 5:
 			config.outputdir = self.FindWindowByName('outputdir').GetPath().encode('utf8')
 			config.url = self.FindWindowByName('url').GetValue()
@@ -165,43 +254,59 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 		else:
 			progresstext = self.FindWindowByName('progresstext')
 			progresstext.SetLabel(text)
-			
+			self.Layout()
+			self.Refresh()
 
+	def StartThrobber(self):
+		self.FindWindowByName('throbber').Start()
+		self.FindWindowByName('throbber').ToggleOverlay(False) 
+
+	def StopThrobber(self):
+		self.FindWindowByName('throbber').Stop()
+		self.FindWindowByName('throbber').ToggleOverlay(True) 
 
 step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
-	'''+_("MapTiler generates tiles for simple online publishing of maps. It offers several tile profiles - several approaches how to cut a map into small tiles.")+'''
+	'''+_("MapTiler generates tiles for fast online map publishing.")+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("What kind of tiles would you like to generate?")+'''</b></font>
 	<p>
 	<font size="-1">
 	<wxp module="wx" class="RadioButton" name="test">
-	    <param name="label" value="'''+_("Global Spherical Mercator (tiles a la Google Maps)")+'''">
+	    <param name="label" value="'''+_("Google Maps compatible (Spherical Mercator)")+'''">
 	    <param name="name" value="mercator">
 	</wxp>
 	<blockquote>
-	'''+("Tiles compatible with Google Maps, Yahoo Maps, MS Virtual Earth, OpenStreetMap, etc. Suitable for overlay mashups or mashups with new map layers compatible with existing interactive maps.")+'''
-	<a href="http://www.maptiler.org/google-maps-coordinate-system-projection-epsg-900913-3785/">'''+("More info")+'''</a>.
+	'''+_("Mercator tiles compatible with Google, Yahoo or Bing maps and OpenStreetMap. Suitable for mashups and overlay with these popular interactive maps.")+'''
+	<a href="http://www.maptiler.org/google-maps-coordinate-system-projection-epsg-900913-3785/">'''+_("More info")+'''</a>.
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
-	    <param name="label" value="'''+("Global Geodetic (unprojected WGS84)")+'''">
+	    <param name="label" value="'''+_("Google Earth (KML SuperOverlay)")+'''">
+	    <param name="name" value="gearth">
+	</wxp>
+	<blockquote>
+	'''+_('Tiles and KML metadata for 3D vizualization in Google Earth desktop application or in the web browser plugin.')+''' 
+	</blockquote>
+	<wxp module="wx" class="RadioButton" name="test">
+	    <param name="label" value="'''+_("WGS84 Plate Caree (Geodetic)")+'''">
 	    <param name="name" value="geodetic">
 	</wxp>
 	<blockquote>
-	'''+('Compatible with most existing WMS servers, with an OpenLayers base map, Google Earth and other applications using WGS84 coordinates (<a href="http://www.spatialreference.org/ref/epsg/4326/">EPSG:4326</a>).')+''' 
+	'''+_('Compatible with most existing WMS servers, with the OpenLayers base map, Google Earth and other applications using WGS84 coordinates (<a href="http://www.spatialreference.org/ref/epsg/4326/">EPSG:4326</a>).')+'''
+	<a href="http://www.maptiler.org/google-maps-coordinate-system-projection-epsg-900913-3785/">'''+'''</a>.
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
-	    <param name="label" value="'''+("Image Based Tiles")+'''">
+	    <param name="label" value="'''+_("Image Based Tiles (Raster)")+'''">
 	    <param name="name" value="raster">
 	</wxp>
 	<blockquote>
-	'''+("Tiles based on the dimensions of the picture in pixels (width and height). The result will look exactly as the original input file (no reprojection of the picture), but the tiles are for stand-alone presentation only. Georeferencing is not necessary. If the input has georeferencing in WGS84 (EPSG:4326) it is possible to display it in Google Earth.")+'''
+	'''+_("Tiles based on the dimensions of the picture in pixels (width and height). Stand-alone presentation even for images without georeference.")+'''
 	</blockquote>
 	</font>'''
 	
-step2 = '''<h3>'''+("Source data files")+'''</h3>
-	'''+("Please choose the raster files of the maps you would like to publish.")+'''
+step2 = '''<h3>'''+_("Source data files")+'''</h3>
+	'''+_("Please choose the raster files of the maps you would like to publish.")+'''
 	<p>
-	<font color="#DC5309" size="large"><b>'''+("Input raster map files:")+'''</b></font>
+	<font color="#DC5309" size="large"><b>'''+_("Input raster map files:")+'''</b></font>
 	<p>
 	<!--
 	<wxp module="wx" class="ListCtrl" name="listctrl" height="250" width="100%">
@@ -214,43 +319,40 @@ step2 = '''<h3>'''+("Source data files")+'''</h3>
 	<wxp module="maptiler.widgets" class="NodataPanel" name="test" height="30" width=100%>
 	<param name="name" value="nodatapanel"></wxp>'''
 
-step3 = '''<h3>'''+("Spatial reference system (SRS)")+'''</h3>
-	'''+('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in the <a href="http://help.maptiler.org/coordinates/">MapTiler help</a>.')+'''
+step3 = '''<h3>'''+_("Spatial reference system (SRS)")+'''</h3>
+	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in the <a href="http://help.maptiler.org/coordinates/">MapTiler help</a>.')+'''
 	<p>
-	<font color="#DC5309" size="large"><b>'''+("What is the Spatial Reference System used in your files?")+'''</b></font>
+	<font color="#DC5309" size="large"><b>'''+_("What is the Spatial Reference System used in your files?")+'''</b></font>
 	<p>
 	<wxp module="maptiler.widgets" class="SpatialReferencePanel" name="test" height="260" width=100%>
 	<param name="name" value="srs">
 	</wxp>'''
 
-step4 = '''<h3>'''+("Details about the tile pyramid")+'''</h3> <!-- Zoom levels, Tile Format (PNG/JPEG) & Addressing, PostProcessing -->
-	'''+("In this step you should specify the details related to rendered tile pyramid.")+'''
-	'''+("<!-- file format and convention for tile addressing (names of the tile files) which you would like to use. -->")+'''
+step4 = '''<h3>'''+_("Details about the tile pyramid")+'''</h3> <!-- Zoom levels, Tile Format (PNG/JPEG) & Addressing, PostProcessing -->
+	'''+_("In this step you should specify the details related to rendered tile pyramid.")+'''
+	'''+_("<!-- file format and convention for tile addressing (names of the tile files) which you would like to use. -->")+'''
 	<p>
-	<font color="#DC5309" size="large"><b>'''+("Zoom levels to generate:")+'''</b></font>
+	<font color="#DC5309" size="large"><b>'''+_("Zoom levels to generate:")+'''</b></font>
 	<p>
-	'''+("Minimum zoom:")+''' <wxp module="wx" class="SpinCtrl" name="test"><param name="name" value="tminz"></wxp> &nbsp;
-	'''+("Maximum zoom:")+''' <wxp module="wx" class="SpinCtrl" name="test"><param name="name" value="tmaxz"></wxp>
+	'''+_("Minimum zoom:")+''' <wxp module="wx" class="SpinCtrl" name="test"><param name="value" value="0"><param name="name" value="tminz"></wxp> &nbsp;
+	'''+_("Maximum zoom:")+''' <wxp module="wx" class="SpinCtrl" name="test"><param name="value" value="0"><param name="name" value="tmaxz"></wxp>
 	<br>
 	<font size="-1">
-	'''+("Note: The selected zoom levels are calculated from your input data and should be OK in most cases.")+'''</font>
-	<p>&nbsp;
+	'''+_("Note: The selected zoom levels are calculated from your input data and should be OK in most cases.")+'''
+	</font>
+	<p>
+	<font color="#DC5309" size="large"><b>'''+_('Please choose a file format')+'''</b></font>
+	<font size="-1">
+	<p>
+	<wxp module="wx" class="Choice" name="test">
+		<param name="name" value="format">
+		<param name="choices" value="(\''''+_("PNG - with transparency")+"','"+_("JPEG - smaller but without transparency")+"','"+_("Hybrid JPEG+PNG - only for Google Earth")+'''\')">
+	</wxp>
 	<p>
 	<font size="-1">
-	'''+('Note: We recommend that you <a href="http://blog.klokan.cz/2008/11/png-palette-with-variable-alpha-small.html">postprocess the produced tiles with the PNGNQ utility</a>.')+'''
-	'''+('This step is not yet available as the GUI option in the same way as the JPEG format for tiles or <a href="http://www.maptiler.org/google-maps-coordinates-tile-bounds-projection/">native Google addressing of tiles</a>.')+'''
+	'''+_('Note: We recommend to <a href="http://blog.klokan.cz/2008/11/png-palette-with-variable-alpha-small.html">postprocess the produced PNG tiles with the PNGNQ utility</a>.')+'''
 	</font>
-
 	<!--
-	sc = wx.SpinCtrl(self, -1, "", (30, 50))
-	        sc.SetRange(1,100)
-	        sc.SetValue(5)
-	<p>
-	<font color="#DC5309" size="large"><b>Please choose a file format</b></font>
-	<p>
-	File format: <wxp module="wx" class="Choice" name="test"><param name="name" value="format"></wxp>
-	<wxp module="wx" class="RadioButton" name="test"><param name="name" value="raster"><param name="label" value="PNG - supports overlay transparency"></wxp>
-	<wxp module="wx" class="RadioButton" name="test"><param name="name" value="raster"><param name="label" value="JPEG - smaller but without transparency"></wxp>
 	<p>
 	<font color="#DC5309" size="large"><b>Tile adressing:</b></font>
 	<p>
@@ -279,106 +381,108 @@ step4 = '''<h3>'''+("Details about the tile pyramid")+'''</h3> <!-- Zoom levels,
 	-->
 	'''
 
-step5 = '''<h3>'''+("Destination folder and address")+'''</h3>
-'''+("Please select a directory where the generated tiles should be saved. Similarly you can specify the Internet address where will you publish the map.")+'''
+step5 = '''<h3>'''+_("Destination folder and address")+'''</h3>
+'''+_("Please select a directory where the generated tiles should be saved. Similarly you can specify the Internet address where will you publish the map.")+'''
 <p>
-<font color="#DC5309" size="large"><b>'''+("Where to save the generated tiles?")+'''</b></font>
+<font color="#DC5309" size="large"><b>'''+_("Where to save the generated tiles?")+'''</b></font>
 <p>
-'''+("Result directory:")+'''<br/>
+'''+_("Result directory:")+'''<br/>
 <wxp module="wx" class="DirPickerCtrl" name="outputdir" width="100%" height="30"><param name="name" value="outputdir"></wxp>
 <p>
-<font color="#DC5309" size="large"><b>'''+("The Internet address (URL) for publishing the map:")+'''</b></font>
+<font color="#DC5309" size="large"><b>'''+_("The Internet address (URL) for publishing the map:")+'''</b></font>
 <p>
-'''+("Destination URL:")+'''<br/>
+'''+_("Destination URL:")+'''<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="url"><param name="value" value="http://"></wxp>
 <p>
 <font size="-1">
-'''+("Note: You should specify the URL if you need to generate the correct KML for Google Earth.")+'''
+'''+_("Note: You should specify the URL if you need to generate the correct KML for Google Earth.")+'''
 </font>'''
 
-step6 = '''<h3>'''+("Selection of the viewers")+'''</h3>
-'''+("MapTiler can also generate simple web viewers for presenting the tiles as a map overlay. You can use these viewers as a base for your mashups. Similarly it is possible to generate KML files for Google Earth.")+'''
+step6 = '''<h3>'''+_("Selection of the viewers")+'''</h3>
+'''+_("MapTiler can also generate simple web viewers for presenting the tiles as a map overlay. You can use these viewers as a base for your mashups. Similarly it is possible to generate KML files for Google Earth.")+'''
 <p>
-<font color="#DC5309" size="large"><b>'''+("What viewers should be generated?")+'''</b></font>
+<font color="#DC5309" size="large"><b>'''+_("What viewers should be generated?")+'''</b></font>
 <p>
 <font size="-1">
-<wxp module="wx" class="CheckBox" name="test"><param name="name" value="google"><param name="label" value="'''+("Google Maps")+'''"></wxp>
+<wxp module="wx" class="CheckBox" name="test"><param name="name" value="google"><param name="label" value="'''+_("Google Maps")+'''"></wxp>
 <blockquote>
-'''+("Overlay presentation of your maps on top of standard Google Maps layers. If KML is generated then the Google Earth Plugin is used as well.")+'''
+'''+_("Overlay presentation of your maps on top of standard Google Maps layers. If KML is generated then the Google Earth Plugin is used as well.")+'''
 </blockquote>
-<wxp module="wx" class="CheckBox" name="test"><param name="name" value="openlayers"><param name="label" value="'''+("OpenLayers")+'''"></wxp>
+<wxp module="wx" class="CheckBox" name="test"><param name="name" value="openlayers"><param name="label" value="'''+_("OpenLayers")+'''"></wxp>
 <blockquote>
-'''+('Overlay of Google Maps, Virtual Earth, Yahoo Maps, OpenStreetMap and OpenAerialMap, WMS and WFS layers and another sources available in the open-source project <a href="http://www.openlayers.org/">OpenLayers</a>.')+'''
+'''+_('Overlay of Google Maps, Virtual Earth, Yahoo Maps, OpenStreetMap and OpenAerialMap, WMS and WFS layers and another sources available in the open-source project <a href="http://www.openlayers.org/">OpenLayers</a>.')+'''
 </blockquote>
 <wxp module="wx" class="CheckBox" name="test"><param name="name" value="kml"><param name="label" value="'''+("Google Earth (KML SuperOverlay)")+'''"></wxp>
 <blockquote>
-'''+("If this option is selected then metadata for Google Earth is generated for the tile tree. It means you can display the tiles as an overlay of the virtual 3D world of the Google Earth desktop application or browser plug-in.")+'''
+'''+_("If this option is selected then metadata for Google Earth is generated for the tile tree. It means you can display the tiles as an overlay of the virtual 3D world of the Google Earth desktop application or browser plug-in.")+'''
 </blockquote>
 </font>'''
 
-step7 = '''<h3>'''+("Details for generating the viewers")+'''</h3>
-'''+("Please add information related to the selected viewers.")+'''
+step7 = '''<h3>'''+_("Details for generating the viewers")+'''</h3>
+'''+_("Please add information related to the selected viewers.")+'''
 <p>
-<font color="#DC5309" size="large"><b>'''+("Info about the map")+'''</b></font>
+<font color="#DC5309" size="large"><b>'''+_("Info about the map")+'''</b></font>
 <p>
-'''+("Title of the map:")+'''<br/>
+'''+_("Title of the map:")+'''<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="title"></wxp>
 <p>
-'''+("Copyright notice (optional):")+'''<br/>
+'''+_("Copyright notice (optional):")+'''<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="copyright"></wxp>
 <p>
-<font color="#DC5309" size="large"><b>'''+("The API keys for online maps API viewers")+'''</b></font>
+<font color="#DC5309" size="large"><b>'''+_("The API keys for online maps API viewers")+'''</b></font>
 <p>
-'''+("Google Maps API key (optional):")+'''<br/>
+'''+_("Google Maps API key (optional):")+'''<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="googlekey"></wxp>
 <font size="-1">
-'''+('Note: You can get it <a href="http://code.google.com/apis/maps/signup.html">online at this address</a>.')+'''
+'''+_('Note: You can get it <a href="http://code.google.com/apis/maps/signup.html">online at this address</a>.')+'''
 </font>
 <p>
-'''+("Yahoo Application ID key (optional):")+'''<br/>
+'''+_("Yahoo Application ID key (optional):")+'''<br/>
 <wxp module="wx" class="TextCtrl" name="test" width="100%"><param name="name" value="yahookey"></wxp>
 <font size="-1">
-'''+('Note: You can get it <a href="http://developer.yahoo.com/wsregapp/">at this webpage</a>.')+'''
+'''+_('Note: You can get it <a href="http://developer.yahoo.com/wsregapp/">at this webpage</a>.')+'''
 </font>'''
 	
-step8 = '''<h3>'''+("Tile rendering")+'''</h3>
-'''+("Now you can start the rendering of the map tiles. It can be a time consuming process especially for large datasets... so be patient please.")+'''
+step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
+'''+_("Now you can start the rendering of the map tiles. It can be a time consuming process especially for large datasets... so be patient please.")+'''
 <p>
-<font color="#DC5309" size="large"><b>'''+("Rendering progress:")+'''</b></font>
+<font color="#DC5309" size="large"><b>'''+_("Rendering progress:")+'''</b></font>
 <p>
 <wxp module="wx" class="Gauge" name="g1" width="100%">
     <param name="name" value="progressbar">
 </wxp>
-<p>
-<wxp module="wx" class="StaticText" name="progresstext" width="75%">
+<center>
+<wxp module="wx" class="StaticText" name="progresstext" width="450">
+    <param name="style" value="wx.ALIGN_CENTRE | wx.ST_NO_AUTORESIZE">
     <param name="name" value="progresstext">
-    <param name="label" value="'''+("Click on the 'Render' button to start the rendering...")+'''">
+    <param name="label" value="'''+_("Click on the 'Render' button to start the rendering...")+'''">
 </wxp>
-<!--
-With nice animation:
-<wxp module="maptiler.widgets" class="ProgressPanel" name="progress" width="100%" height="50"><param name="name" value="progress"></wxp> -->
-<p>&nbsp;
+<p>
+<wxp module="maptiler.widgets" class="Throbber" name="throbber" width="16" height="16">
+    <param name="name" value="throbber">
+</wxp>
+</center>
 <font size="-1">
-<br>'''+("Thank you for using MapTiler application. You can help us with improvement of this software!")+'''
-<br>'''+('Join the <a href="http://groups.google.com/group/maptiler">MapTiler User Group</a> to speak with other MapTiler users and tell us about the maps you published!')+'''
-<br>'''+('You can also check the <a href="http://maptiler.uservoice.com/">MapTiler Feedback Forum</a>, where you can vote for planned features or submit your own ideas for improvement. If you find a bug please <a href="http://code.google.com/p/maptiler/issues/list">report it here</a>.')+'''
+<p>&nbsp;
+<br>'''+_("Thank you for using MapTiler application.")+" "+_('This is an open-source project - you can help us to make it better.')+" "+_('Join the <a href="http://groups.google.com/group/maptiler">MapTiler User Group</a> to speak with other MapTiler users and tell us about the maps you are publishing!')+" "+_('You can also <a href="http://maptiler.uservoice.com/">suggest improvements</a> or <a href="http://code.google.com/p/maptiler/issues/list">report bugs</a>.')+'''
 <p>
-'''+('This is an open-source project. We welcome contribution from other programmers or <a href="http://www.maptiler.org/support/">donations or sponsorship</a> from our users.')+'''<br>
-'''+('This software was created with the support of <a href="http://help.maptiler.org/credits/">sponsors and contributors</a>, thank you!')+'''
+'''+_("Please consider")+' <b><a href="'+config.DONATE_URL+'">'+_("donation via PayPal or Credit Card.")+ "</a></b> "+_("We welcome contribution to the source code, help with documentation, localization or with user support.")+" "+_('Thanks belongs to <a href="http://help.maptiler.org/credits/">those who have already helped</a>!')+'''
 <p>
-'''+('There is also an offer of <a href="http://www.maptiler.com/">commercial services and paid user-support</a> related to batch map tile rendering for big datasets, conversion of input geodata and development of new features.</font>')
+'''+_('Authors of this utility provide <b><a href="http://www.maptiler.com/">commercial support</a></b> related to the map tile rendering, geodata processing and customization of open-source GIS tools. We have developed also a <b><a href="http://www.maptiler.com/">fast parallelized utility</a></b> for efficient tile rendering on Multi-Core processors and on clusters like Amazon EC2.</font>')
 
 # step9 - step8 with Resume button
 
 # step10:
-stepfinal = '''<h3>'''+("Your rendering task is finished!")+'''</h3>
-'''+("Thank you for using this software. Now you can see the results. If you upload the directory with tiles to the Internet your map is published!")+'''
+stepfinal = '''<h3>'''+_("Your rendering task is finished!")+'''</h3>
+'''+_("Thank you for using this software. Now you can see the results. If you upload the directory with tiles to the Internet your map is published!")+'''
 <p>
-<font color="#DC5309" size="large"><b>'''+("Available results:")+'''</b></font>
+<font color="#DC5309" size="large"><b>'''+_("Available results:")+'''</b></font>
 <p>
-'''+("The generated tiles and also the viewers are available in the output directory:")+'''
+'''+_("The generated tiles and also the viewers are available in the output directory:")+'''
 <p>
-<b><a href="file://%s">%s</a></b>
+<center>
+<b><a href="file://%s">%s</a></b><br>'''+_("(click to open)")+'''
+</center>
 <!--
 <ul>
 <li>Open the <a href="">Google Maps presentation</a> 
@@ -389,12 +493,11 @@ stepfinal = '''<h3>'''+("Your rendering task is finished!")+'''</h3>
 <p>&nbsp;
 <p>
 <center>
-'''+("Please support development and maintenance of this project. It makes it possible for us to spend more time working on this free software.")+'''<br>
-'''+("Even a small amount helps!")+'''
+<a href="'''+config.DONATE_URL+'''"><img src="memory:donatebtn.png"></a>
 <p>
-'''+("VISA, MasterCard, American Express and other forms of payment as well as PayPal are available.")+'''
-<p>
-<a href="http://www.maptiler.org/support/">'''+('Say "Thank you" by a small donation for further development')+'''</a>
+'''+_("Please support development and maintenance of this project.")+'''
+'''+_("Even a small amount helps!")+'''
+'''+_("You can use PayPal or credit cards like VISA, MasterCard, American Express.")+'''
 </center>
 '''
 

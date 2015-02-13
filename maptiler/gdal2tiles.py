@@ -42,6 +42,8 @@ import sys
 import os
 import math
 
+from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
+
 try:
 	from PIL import Image
 	import numpy
@@ -54,7 +56,7 @@ __version__ = "$Id: gdal2tiles.py 15748 2008-11-17 16:30:54Z klokan $"
 
 resampling_list = ('average','near','bilinear','cubic','cubicspline','lanczos','antialias')
 tile_formats_list = ('png', 'jpeg', 'hybrid')
-profile_list = ('mercator','geodetic','raster','gearth') #,'zoomify')
+profile_list = ('mercator','geodetic','raster','gearth','garmin') #,'zoomify')
 webviewer_list = ('all','google','openlayers','none')
 
 format_extension = {
@@ -66,6 +68,9 @@ format_mime = {
 	"PNG" : "image/png",
 	"JPEG" : "image/jpeg"
 }
+
+jpeg_quality = 85
+jpeg_gdal_options = ["QUALITY=%d" % jpeg_quality]
 
 # =============================================================================
 # =============================================================================
@@ -485,21 +490,31 @@ class GDAL2Tiles(object):
 		
 		# Generation of the overview tiles (higher in the pyramid)
 		self.generate_overview_tiles()
-		
+
+		# Generating of KML
+		self.generate_kml()
+
 	# -------------------------------------------------------------------------
 	def error(self, msg, details = "" ):
 		"""Print an error message and stop the processing"""
 
-		if details:
-			self.parser.error(msg + "\n\n" + details)
-		else:	
+		if details is not None:
+			msg += "\n\n" + details
+
+		if not self.is_subprocess:
 			self.parser.error(msg)
-		
+		else:
+			raise Exception(msg)
+
 	# -------------------------------------------------------------------------
 	def progressbar(self, complete = 0.0):
 		"""Print progressbar for float value 0..1"""
 		
-		gdal.TermProgress_nocb(complete)
+		if self.is_subprocess:
+			sys.stderr.write("%f\n" % complete)
+			sys.stderr.flush()
+		else:
+			gdal.TermProgress_nocb(complete)
 
 	# -------------------------------------------------------------------------
 	def stop(self):
@@ -507,15 +522,14 @@ class GDAL2Tiles(object):
 		self.stopped = True
 
 	# -------------------------------------------------------------------------
-	def __init__(self, arguments ):
+	def __init__(self, arguments, is_subprocess=False, gdalcache=None):
 		"""Constructor function - initialization"""
 		
 		self.stopped = False
 		self.input = None
 		self.output = None
 
-		# Tile format
-		self.tilesize = 256
+		self.is_subprocess = is_subprocess
 
 		# Should we read bigger window of the input raster and scale it down?
 		# Note: Modified leter by open_input()
@@ -523,9 +537,6 @@ class GDAL2Tiles(object):
 		# Not for Wavelet based drivers (JPEG2000, ECW, MrSID)
 		# Not for 'raster' profile
 		self.scaledquery = True
-		# How big should be query window be for scaling down
-		# Later on reset according the chosen resampling algorightm
-		self.querysize = 4 * self.tilesize
 
 		# Should we use Read on the input file for generating overview tiles?
 		# Note: Modified later by open_input()
@@ -540,6 +551,18 @@ class GDAL2Tiles(object):
 			self.error("No input file specified")
 
 		# POSTPROCESSING OF PARSED ARGUMENTS:
+
+		# Tile size 
+		try:
+			self.tilesize = int(self.options.tilesize)
+		except:
+			self.tilesize = 256
+			if self.options.profile == 'garmin':
+				self.tilesize = 512
+
+		# How big should be query window be for scaling down
+		# Later on reset according the chosen resampling algorightm
+		self.querysize = 4 * self.tilesize
 
 		# Workaround for old versions of GDAL
 		try:
@@ -605,8 +628,15 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		if self.options.tile_format is None:
 			if self.options.profile == 'gearth':
 				self.options.tile_format = 'hybrid'
+			elif self.options.profile == 'garmin':
+				self.options.tile_format = 'jpeg'
 			else:
 				self.options.tile_format = 'png'
+				
+		# Tile size and no webviewer for garmin profile
+		if self.options.profile == 'garmin':
+			self.options.webviewer = 'none'
+			self.options.url = ''
 
 		# Webviewer default depends on tile format.
 		if self.options.webviewer is None:
@@ -635,7 +665,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		
 		# KML generation
 		self.kml = self.options.kml
-		if self.options.kml_depth:
+		if self.options.kml_depth is not None:
 			self.kml_depth = int(self.options.kml_depth)
 			assert self.kml_depth > 0
 		else:
@@ -643,6 +673,13 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 				self.kml_depth = 3
 			else:
 				self.kml_depth = 1
+
+		if self.options.kmz is None:
+			self.options.kmz = self.options.profile == 'gearth'
+
+		# GDAL Cache
+		if gdalcache is not None: # default gdal.GetCacheMax() == 40*1024*1024:
+			gdal.SetCacheMax(gdalcache)
 
 		# Output the results
 
@@ -673,7 +710,11 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		p.add_option('-e', '--resume', dest="resume", action="store_true",
 						  help="Resume mode. Generate only missing files.")
 		p.add_option('-a', '--srcnodata', dest="srcnodata", metavar="NODATA",
-			  			  help="NODATA transparency value to assign to the input data")
+						  help="NODATA transparency value to assign to the input data")
+		p.add_option('-i', '--init-dest', dest="init_dest",
+						  help="Colour used to initialize output, only for 'jpeg' tile format")
+		p.add_option('', '--tilesize', dest="tilesize",
+						  help="Size of the tiles - default 256")
 		p.add_option("-v", "--verbose",
 						  action="store_true", dest="verbose",
 						  help="Print status messages to stdout")
@@ -687,7 +728,11 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		g.add_option("-u", "--url", dest='url',
 						  help="URL address where the generated tiles are going to be published")
 		g.add_option('-d', '--kml-depth', dest="kml_depth",
-						  help="How many levels to store before linking, default 1.")
+						  help="How many levels to store before linking, default 1")
+		g.add_option('--kmz', dest="kmz", action="store_true",
+						  help="Compress KML files into KMZ format, default for 'gearth' profile")
+		g.add_option('--no-kmz', dest="kmz", action="store_false",
+						  help="Do not compress KML files into KMZ format, default for 'mercator', 'geodetic' and 'raster' profiles")
 		p.add_option_group(g)
 
 		# HTML options
@@ -710,8 +755,8 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 		#				  help="Generate tileindex and mapfile for MapServer (WMS)")
 		# p.add_option_group(g)
 
-		p.set_defaults(verbose=False, profile="mercator", kml=False, url='',
-		copyright='', resampling='average', resume=False,
+		p.set_defaults(verbose=False, profile="mercator", kml=False, url=None,
+		copyright='', resampling='average', resume=False, tilesize=None,
 		googlekey='INSERT_YOUR_KEY_HERE', yahookey='INSERT_YOUR_YAHOO_APP_ID_HERE')
 
 		self.parser = p
@@ -723,7 +768,7 @@ gdal_vrtmerge.py -o merged.vrt %s""" % " ".join(self.args))
 	def open_input(self):
 		"""Initialization of the input raster, reprojection if necessary"""
 		
-		gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
+		gdal.SetConfigOption("GDAL_PAM_ENABLED", "YES")
 		gdal.AllRegister()
 
 		# Open the input file
@@ -753,8 +798,8 @@ gdal2tiles temp.vrt""" % self.input )
 
 		# Get NODATA value
 		# User supplied values overwrite everything else.
-		if self.options.srcnodata:
-			nds = map( float, self.options.srcnodata.split(','))
+		if self.options.srcnodata is not None:
+			nds = map(float, self.options.srcnodata.split(','))
 			if len(nds) < self.in_ds.RasterCount:
 				self.in_nodata = (nds * self.in_ds.RasterCount)[:self.in_ds.RasterCount]
 			else:
@@ -766,15 +811,34 @@ gdal2tiles temp.vrt""" % self.input )
 				if self.in_ds.GetRasterBand(i).GetNoDataValue() != None:
 					self.in_nodata.append( self.in_ds.GetRasterBand(i).GetNoDataValue() )
 
-			# If it does not and we are producing JPEG, make NODATA white.
-			if len(self.in_nodata) == 0 and self.options.tile_format == "jpeg":
-				if self.in_ds.RasterCount in (1,3):
-					self.in_nodata = [255] * self.in_ds.RasterCount
-				elif self.in_ds.RasterCount == 4:
-					self.in_nodata = [255,255,255,0]
-
 		if self.options.verbose:
 			print "NODATA: %s" % self.in_nodata
+
+		# INIT DEST
+		if self.options.init_dest is not None:
+			if self.options.tile_format == "jpeg":
+				if self.in_ds.RasterCount == 4:
+					nbands = 3
+				else:
+					nbands = self.in_ds.RasterCount
+
+				nds = map(float, self.options.init_dest.split(','))
+
+				if len(nds) == 1:
+					init_dest = nds * nbands
+				elif len(nds) == nbands:
+					init_dest = nds
+				else:
+					print "WARNING: you suplied %d '--init-dest' values but the dataset has %d data bands" % (len(nds), nbands)
+					init_dest = None
+			else:
+				init_dest = None
+				print "WARNING: --init-dest can be used only with 'jpeg' tile format"
+		else:
+			if self.options.tile_format == "jpeg":
+				init_dest = [255,255,255]
+			else:
+				init_dest = None
 
 		#
 		# Here we should have RGBA input dataset opened in self.in_ds
@@ -807,8 +871,8 @@ gdal2tiles temp.vrt""" % self.input )
 		self.out_srs = osr.SpatialReference()
 
 		if self.options.profile == 'mercator':
-			self.out_srs.ImportFromEPSG(900913)
-		elif self.options.profile in ('geodetic', 'gearth'):
+			self.out_srs.ImportFromEPSG(3857)
+		elif self.options.profile in ('geodetic', 'gearth', 'garmin'):
 			self.out_srs.ImportFromEPSG(4326)
 		else:
 			self.out_srs = self.in_srs
@@ -816,9 +880,9 @@ gdal2tiles temp.vrt""" % self.input )
 		# Are the reference systems the same? Reproject if necessary.
 
 		self.out_ds = None
-		
-		if self.options.profile in ('mercator', 'geodetic', 'gearth'):
-						
+
+		if self.options.profile in ('mercator', 'geodetic', 'gearth', 'garmin'):
+
 			if (self.in_ds.GetGeoTransform() == (0.0, 1.0, 0.0, 0.0, 0.0, 1.0)) and (self.in_ds.GetGCPCount() == 0):
 				self.error("There is no georeference - neither affine transformation (worldfile) nor GCPs. You can generate only 'raster' profile tiles.",
 				"Either gdal2tiles with parameter -p 'raster' or use another GIS software for georeference e.g. gdal_transform -gcp / -a_ullr / -a_srs")
@@ -837,7 +901,7 @@ gdal2tiles temp.vrt""" % self.input )
 						self.out_ds.GetDriver().CreateCopy("tiles.vrt", self.out_ds)
 						
 					# Note: self.in_srs and self.in_srs_wkt contain still the non-warped reference system!!!
-
+						
 					# Correction of AutoCreateWarpedVRT for NODATA values
 					if self.in_nodata != []:
 						import tempfile
@@ -847,16 +911,20 @@ gdal2tiles temp.vrt""" % self.input )
 						s = open(tempfilename).read()
 						# Add the warping options
 						s = s.replace("""<GDALWarpOptions>""","""<GDALWarpOptions>
-	  <Option name="INIT_DEST">NO_DATA</Option>
-	  <Option name="UNIFIED_SRC_NODATA">YES</Option>""")
+	  <Option name="UNIFIED_SRC_NODATA">YES</Option>
+	  <Option name="INIT_DEST">NO_DATA</Option>""")
 						# replace BandMapping tag for NODATA bands....
+						if init_dest is None:
+							dstnodata = self.in_nodata
+						else:
+							dstnodata = init_dest
 						for i in range(len(self.in_nodata)):
 							s = s.replace("""<BandMapping src="%i" dst="%i"/>""" % ((i+1),(i+1)),"""<BandMapping src="%i" dst="%i">
 	      <SrcNoDataReal>%i</SrcNoDataReal>
 	      <SrcNoDataImag>0</SrcNoDataImag>
 	      <DstNoDataReal>%i</DstNoDataReal>
 	      <DstNoDataImag>0</DstNoDataImag>
-	    </BandMapping>""" % ((i+1), (i+1), self.in_nodata[i], self.in_nodata[i])) # Or rewrite to white by: , 255 ))
+	    </BandMapping>""" % ((i+1), (i+1), self.in_nodata[i], dstnodata[i]))
 						# save the corrected VRT
 						open(tempfilename,"w").write(s)
 						# open by GDAL as self.out_ds
@@ -866,7 +934,6 @@ gdal2tiles temp.vrt""" % self.input )
 
 						# set NODATA_VALUE metadata
 						self.out_ds.SetMetadataItem('NODATA_VALUES','%s' % " ".join(str(int(f)) for f in self.in_nodata))
-#						'%i %i %i' % (self.in_nodata[0],self.in_nodata[1],self.in_nodata[2]))
 
 						if self.options.verbose:
 							print "Modified warping result saved into 'tiles1.vrt'"
@@ -875,7 +942,7 @@ gdal2tiles temp.vrt""" % self.input )
 					# -----------------------------------
 					# Correction of AutoCreateWarpedVRT for Mono (1 band) and RGB (3 bands) files without NODATA:
 					# equivalent of gdalwarp -dstalpha
-					if self.in_nodata == [] and self.out_ds.RasterCount in [1,3]:
+					elif self.in_nodata == [] and self.out_ds.RasterCount in (1,3):
 						import tempfile
 						tempfilename = tempfile.mktemp('-gdal2tiles.vrt')
 						self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
@@ -888,8 +955,12 @@ gdal2tiles temp.vrt""" % self.input )
   <BlockXSize>""" % (self.out_ds.RasterCount + 1))
 						s = s.replace("""</GDALWarpOptions>""", """<DstAlphaBand>%i</DstAlphaBand>
   </GDALWarpOptions>""" % (self.out_ds.RasterCount + 1))
+						if init_dest is None:
+							init_dest_str = "0"
+						else:
+							init_dest_str = ",".join(str(f) for f in init_dest)
 						s = s.replace("""</WorkingDataType>""", """</WorkingDataType>
-    <Option name="INIT_DEST">0</Option>""")
+    <Option name="INIT_DEST">%s</Option>""" % init_dest_str)
 						# save the corrected VRT
 						open(tempfilename,"w").write(s)
 						# open by GDAL as self.out_ds
@@ -900,6 +971,32 @@ gdal2tiles temp.vrt""" % self.input )
 						if self.options.verbose:
 							print "Modified -dstalpha warping result saved into 'tiles1.vrt'"
 							open("tiles1.vrt","w").write(s)
+
+					elif init_dest is not None:
+						import tempfile
+						tempfilename = tempfile.mktemp('-gdal2tiles.vrt')
+						self.out_ds.GetDriver().CreateCopy(tempfilename, self.out_ds)
+						# open as a text file
+						s = open(tempfilename).read()
+						# Add the warping options
+						s = s.replace("""</WorkingDataType>""", """</WorkingDataType>
+    <Option name="INIT_DEST">%s</Option>""" % ",".join(str(f) for f in init_dest))
+						# save the corrected VRT
+						open(tempfilename,"w").write(s)
+						# open by GDAL as self.out_ds
+						self.out_ds = gdal.Open(tempfilename) #, gdal.GA_ReadOnly)
+						# delete the temporary file
+						os.unlink(tempfilename)
+
+						if self.options.verbose:
+							print "Modified warping result saved into 'tiles1.vrt'"
+							open("tiles1.vrt","w").write(s)
+
+					# For raster with 4-bands: 4th unknown band set to alpha
+					if (self.out_ds.RasterCount == 4
+						and self.out_ds.GetRasterBand(4).GetRasterColorInterpretation() == gdal.GCI_Undefined):
+						self.out_ds.GetRasterBand(4).SetRasterColorInterpretation(gdal.GCI_AlphaBand)
+
 					s = '''
 					'''
 						
@@ -928,7 +1025,8 @@ gdal2tiles temp.vrt""" % self.input )
 
 		# Instantiate image output.
 		self.image_output = ImageOutput(self.options.tile_format, self.out_ds, self.tilesize,
-										self.options.resampling, self.in_nodata, self.output)
+										self.options.resampling, init_dest, self.output,
+										self.options.verbose)
 
 		# Read the georeference 
 
@@ -1029,7 +1127,7 @@ gdal2tiles temp.vrt""" % self.input )
 			if self.options.verbose:
 				print "Bounds (latlong):", self.ominx, self.ominy, self.omaxx, self.omaxy
 					
-		if self.options.profile in ('raster', 'gearth'):
+		if self.options.profile in ('raster', 'gearth', 'garmin'):
 			
 			log2 = lambda x: math.log10(x) / math.log10(2) # log2 (base 2 logarithm)
 			
@@ -1047,6 +1145,21 @@ gdal2tiles temp.vrt""" % self.input )
 			if self.tmaxz == None:
 				self.tmaxz = self.nativezoom
 
+			# Garmin has maximally 100 tiles - lower the tmaxz if necessary
+			if self.options.profile == 'garmin':
+				tno = math.ceil(self.out_ds.RasterXSize / self.tilesize) * math.ceil(self.out_ds.RasterYSize / self.tilesize)
+				for tz in range(self.tmaxz, 1, -1):
+					if tno > 100:
+						tno /= 4
+						self.tmaxz -= 1 
+						print "Warning: GARMIN has a limit 100 tiles per device: lowering the max zoom level to:", self.tmaxz
+					else:
+						continue
+
+			# Force only one zoom level for the 'garmin' tile profile
+			if self.options.profile == 'garmin':
+				self.tminz = self.tmaxz
+
 			# Generate table with min max tile coordinates for all zoomlevels
 			self.tminmax = range(0, self.tmaxz+1)
 			self.tsize = range(0, self.tmaxz+1)
@@ -1063,8 +1176,8 @@ gdal2tiles temp.vrt""" % self.input )
 				self.ct = osr.CoordinateTransformation(self.in_srs, srs4326)
 
 				def rastertileswne(x,y,z):
-					pixelsizex = (2**(self.tmaxz-z) * self.out_gt[1]) # X-pixel size in level
-					pixelsizey = (2**(self.tmaxz-z) * self.out_gt[1]) # Y-pixel size in level (usually -1*pixelsizex)
+					pixelsizex = (2**(self.nativezoom-z) * self.out_gt[1]) # X-pixel size in level
+					pixelsizey = (2**(self.nativezoom-z) * self.out_gt[5]) # Y-pixel size in level (usually -1*pixelsizex)
 					west = self.out_gt[0] + x*self.tilesize*pixelsizex
 					east = west + self.tilesize*pixelsizex
 					south = self.ominy + y*self.tilesize*pixelsizex
@@ -1123,7 +1236,7 @@ gdal2tiles temp.vrt""" % self.input )
 					f.write( self.generate_openlayers() )
 					f.close()			
 
-		elif self.options.profile == 'raster':
+		elif self.options.profile in ['raster','gearth','garmin']:
 			
 			west, south = self.ominx, self.ominy
 			east, north = self.omaxx, self.omaxy
@@ -1139,7 +1252,7 @@ gdal2tiles temp.vrt""" % self.input )
 
 
 		# Generate tilemapresource.xml.
-		if (self.options.tile_format != 'hybrid' and self.options.profile != 'gearth'
+		if (self.options.tile_format != 'hybrid' and self.options.profile != 'garmin'
 			and (not self.options.resume or not os.path.exists(os.path.join(self.output, 'tilemapresource.xml')))):
 			f = open(os.path.join(self.output, 'tilemapresource.xml'), 'w')
 			f.write( self.generate_tilemapresource())
@@ -1148,7 +1261,9 @@ gdal2tiles temp.vrt""" % self.input )
 	# -------------------------------------------------------------------------
 	def generate_base_tiles(self):
 		"""Generation of the base tiles (the lowest in the pyramid) directly from the input raster"""
-		
+
+		gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
+
 		print "Generating Base Tiles:"
 		
 		if self.options.verbose:
@@ -1185,84 +1300,85 @@ gdal2tiles temp.vrt""" % self.input )
 					break
 				ti += 1
 
-				#print "\tgdalwarp -ts 256 256 -te %s %s %s %s %s %s_%s_%s.tif" % ( b[0], b[1], b[2], b[3], "tiles.vrt", tz, tx, ty)
-
-				# Don't scale up by nearest neighbour, better change the querysize
-				# to the native resolution (and return smaller query tile) for scaling
-
-				if self.options.profile in ('mercator','geodetic'):
-					if self.options.profile == 'mercator':
-						# Tile bounds in EPSG:900913
-						b = self.mercator.TileBounds(tx, ty, tz)
-					elif self.options.profile == 'geodetic':
-						b = self.geodetic.TileBounds(tx, ty, tz)
-
-					rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1])
-					nativesize = wb[0]+wb[2] # Pixel size in the raster covering query geo extent
-					if self.options.verbose:
-						print "\tNative Extent (querysize",nativesize,"): ", rb, wb
-
-					querysize = self.querysize
-					# Tile bounds in raster coordinates for ReadRaster query
-					rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1], querysize=querysize)
-
-					rx, ry, rxsize, rysize = rb
-					wx, wy, wxsize, wysize = wb
-				else: # 'raster' or 'gearth' profile:
-					
-					tsize = int(self.tsize[tz]) # tilesize in raster coordinates for actual zoom
-					xsize = self.out_ds.RasterXSize # size of the raster in pixels
-					ysize = self.out_ds.RasterYSize
-					if tz >= self.nativezoom:
-						querysize = self.tilesize # int(2**(self.nativezoom-tz) * self.tilesize)
-
-					rx = (tx) * tsize
-					rxsize = 0
-					if tx == tmaxx:
-						rxsize = xsize % tsize
-					if rxsize == 0:
-						rxsize = tsize
-					
-					rysize = 0
-					if ty == tmaxy:
-						rysize = ysize % tsize
-					if rysize == 0:
-						rysize = tsize
-					ry = ysize - (ty * tsize) - rysize
-
-					wx, wy = 0, 0
-					wxsize, wysize = int(rxsize/float(tsize) * self.tilesize), int(rysize/float(tsize) * self.tilesize)
-					if wysize != self.tilesize:
-						wy = self.tilesize - wysize
-
-				xyzzy = Xyzzy(querysize, rx, ry, rxsize, rysize, wx, wy, wxsize, wysize)
+				if self.options.verbose:
+					print ti, '/', tcount, self.get_verbose_tile_name(tx, ty, tz)
 
 				if self.options.resume:
 					exists = self.image_output.tile_exists(tx, ty, tz)
 					if exists and self.options.verbose:
-						print "Tile generation skiped because of --resume"
+						print "\tTile generation skipped because of --resume"
 				else:
 					exists = False
 
 				if not exists:
-					try:
-						if self.options.verbose:
-							print ti,'/',tcount
-							print "\tReadRaster Extent: ", (rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize)
+					# Don't scale up by nearest neighbour, better change the querysize
+					# to the native resolution (and return smaller query tile) for scaling
+					if self.options.profile in ('mercator','geodetic'):
+						if self.options.profile == 'mercator':
+							# Tile bounds in EPSG:900913
+							b = self.mercator.TileBounds(tx, ty, tz)
+						elif self.options.profile == 'geodetic':
+							b = self.geodetic.TileBounds(tx, ty, tz)
 
+						rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1])
+						nativesize = wb[0]+wb[2] # Pixel size in the raster covering query geo extent
+						if self.options.verbose:
+							print "\tNative Extent (querysize",nativesize,"): ", rb, wb
+
+						querysize = self.querysize
+						# Tile bounds in raster coordinates for ReadRaster query
+						rb, wb = self.geo_query( ds, b[0], b[3], b[2], b[1], querysize=querysize)
+
+						rx, ry, rxsize, rysize = rb
+						wx, wy, wxsize, wysize = wb
+					else: # 'raster' or 'gearth' or 'garmin' profile:
+						tsize = int(self.tsize[tz]) # tilesize in raster coordinates for actual zoom
+						xsize = self.out_ds.RasterXSize # size of the raster in pixels
+						ysize = self.out_ds.RasterYSize
+						if tz >= self.nativezoom:
+							querysize = self.tilesize # int(2**(self.nativezoom-tz) * self.tilesize)
+
+						rx = (tx) * tsize
+						rxsize = 0
+						if tx == tmaxx:
+							rxsize = xsize % tsize
+						if rxsize == 0:
+							rxsize = tsize
+
+						rysize = 0
+						if ty == tmaxy:
+							rysize = ysize % tsize
+						if rysize == 0:
+							rysize = tsize
+						ry = ysize - (ty * tsize) - rysize
+
+						wx, wy = 0, 0
+						
+						wxsize, wysize = int(rxsize/float(tsize) * querysize), int(rysize/float(tsize) * querysize)
+						if wysize != querysize:
+							wy = querysize - wysize
+
+					xyzzy = Xyzzy(querysize, rx, ry, rxsize, rysize, wx, wy, wxsize, wysize)
+
+					try:
 						self.image_output.write_base_tile(tx, ty, tz, xyzzy)
 					except ImageOutputException, e:
 						self.error("'%d/%d/%d': %s" % (tz, tx, ty, e.message))
 
-				if not self.options.verbose:
+				if not self.options.verbose or self.is_subprocess:
 					self.progressbar( ti / float(tcount) )
 
 	# -------------------------------------------------------------------------
 	def generate_overview_tiles(self):
 		"""Generation of the overview tiles (higher in the pyramid) based on existing tiles"""
-		
+
+		gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
+
 		print "Generating Overview Tiles:"
 		
+		if self.options.profile == 'garmin': # no overview tiles for 'garmin'
+			return
+
 		# Usage of existing tiles: from 4 underlying tiles generate one as overview.
 		
 		tcount = 0
@@ -1285,30 +1401,58 @@ gdal2tiles temp.vrt""" % self.input )
 						
 					ti += 1
 
+					if self.options.verbose:
+						print ti, '/', tcount, self.get_verbose_tile_name(tx, ty, tz)
+
 					if self.options.resume:
 						exists = self.image_output.tile_exists(tx, ty, tz)
 						if exists and self.options.verbose:
-							print "Tile generation skiped because of --resume"
+							print "\tTile generation skipped because of --resume"
 					else:
 						exists = False
 
 					if not exists:
 						try:
-							if self.options.verbose:
-								print ti,'/',tcount
-								print "\tbuild from zoom", tz+1," tiles:", (2*tx, 2*ty), (2*tx+1, 2*ty),(2*tx, 2*ty+1), (2*tx+1, 2*ty+1)
-
 							self.image_output.write_overview_tile(tx, ty, tz)
-						except Exception, e:
+						except ImageOutputException, e:
 							self.error("'%d/%d/%d': %s" % (tz, tx, ty, e.message))
 
-					if not self.options.verbose:
+					if not self.options.verbose or self.is_subprocess:
 						self.progressbar( ti / float(tcount) )
 
+	# -------------------------------------------------------------------------
+	def generate_kml(self):
 		if not self.kml:
 			return
 
-		# Generate KML based on which files were produced.
+		# The KMZ specific to 'garmin' profile
+		if self.options.profile == 'garmin':
+			if os.path.basename( self.output ):
+				zipname = os.path.basename( self.output ) + '.kmz'
+			else:
+				zipname = os.path.basename( self.output[:-1] + '.kmz' )
+			f = ZipFile(os.path.join( self.output, zipname), "w", ZIP_DEFLATED)
+			kml_tiles = {}
+			children_kml = []
+			tz = self.tmaxz
+			tminx, tminy, tmaxx, tmaxy = self.tminmax[tz]
+			for ty in range(tminy, tmaxy+1):
+				for tx in range(tminx, tmaxx+1):
+					image_format = self.image_output.try_to_use_existing_tile(tx, ty, tz)
+					if image_format is None:
+						continue
+					filename = self.image_output.get_full_path(tx, ty, tz, format_extension[image_format])
+					f.write(filename, get_tile_filename(tx, ty, tz, format_extension[image_format]), ZIP_STORED)
+					os.unlink(filename)
+
+					d = self.get_kml_dict(tx, ty, tz, image_format, draworder = 50)
+					children_kml.append( self.generate_garmin_kml(d) )
+			
+			f.writestr("doc.kml", self.generate_document_kml(self.options.title, "".join(children_kml)))
+			f.close()
+			import shutil
+			shutil.rmtree( os.path.join(self.output, str(tz)) )
+			return
 
 		# Base level KML.
 		kml_tiles = {}
@@ -1357,7 +1501,10 @@ gdal2tiles temp.vrt""" % self.input )
 						for y in range(tminy, tmaxy+1)
 						for x in range(tminx, tmaxx+1)
 						if (x,y,self.tminz) in kml_tiles]
-		self.write_kml_file("doc.kml", self.options.title, "\n".join(children_kml))
+		
+		lookat = computeFitLookAt(self.swne[1], self.swne[0], self.swne[3], self.swne[2])
+		lookat_kml = self.generate_lookat_kml_block(lookat[0], lookat[1], lookat[2])
+		self.write_kml_file("doc.kml", self.options.title, lookat_kml+"\n".join(children_kml))
 
 	# -------------------------------------------------------------------------
 	def geo_query(self, ds, ulx, uly, lrx, lry, querysize = 0):
@@ -1404,17 +1551,42 @@ gdal2tiles temp.vrt""" % self.input )
 
 	# -------------------------------------------------------------------------
 	def write_kml_tile(self, tx, ty, tz, kml):
-		filename = get_tile_filename(tx, ty, tz, "kml")
-		self.write_kml_file(filename, filename, kml)
+		if self.options.kmz:
+			filename = get_tile_filename(tx, ty, tz, "kmz")
+			self.write_kmz_file(filename, filename, kml)
+		else:
+			filename = get_tile_filename(tx, ty, tz, "kml")
+			self.write_kml_file(filename, filename, kml)
 
 	def write_kml_file(self, filename, title, content):
 		f = open(os.path.join(self.output, filename), 'w')
 		f.write(self.generate_document_kml(title, content))
 		f.close()
 
+	def write_kmz_file(self, filename, title, content):
+		f = ZipFile(os.path.join(self.output, filename), "w", ZIP_DEFLATED)
+		f.writestr("doc.kml", self.generate_document_kml(title, content))
+		f.close()
+
 	def generate_node_kml(self, d, children):
 		"""Return KML describing tile image and its children."""
 		return self.generate_leaf_kml(d, "\n".join(children))
+
+	def generate_garmin_kml(self, d ):
+		"""Return Garmin KML block describing an tile image."""
+		return ("""
+      <GroundOverlay>
+        <Icon>
+          <href>%(image_url)s</href>
+          <DrawOrder>%(draw_order)d</DrawOrder>
+        </Icon>
+        <LatLonBox>
+          <north>%(north).14f</north>
+          <south>%(south).14f</south>
+          <east>%(east).14f</east>
+          <west>%(west).14f</west>
+        </LatLonBox>
+      </GroundOverlay>""" % d )
 
 	def generate_leaf_kml(self, d, content=""):
 		"""Return KML describing tile image and insert content."""
@@ -1486,9 +1658,22 @@ gdal2tiles temp.vrt""" % self.input )
     </Style>
 %s
   </Document>
-</kml>""" % (title, content)
+</kml>""" % (title.replace('\\','/'), content)
 
-	def get_kml_dict(self, tx, ty, tz, image_format):
+	def generate_lookat_kml_block(self, lng, lat, viewrange):
+		"""Return the KML string containing correct <LookAt> block"""
+		return """
+    <LookAt>
+      <longitude>%.14f</longitude>
+      <latitude>%.14f</latitude>
+      <altitude>0</altitude>
+      <range>%.f</range>
+      <tilt>0</tilt>
+      <heading>0</heading>
+    </LookAt>
+""" % (lng, lat, viewrange)
+
+	def get_kml_dict(self, tx, ty, tz, image_format, draworder = 0):
 		"""Return dictionary describing KML info about tile to be used in templates."""
 		d = {}
 
@@ -1496,30 +1681,47 @@ gdal2tiles temp.vrt""" % self.input )
 
 		image_filename = get_tile_filename(tx, ty, tz, format_extension[image_format])
 		d["image_filename"] = image_filename
+		d["image_filename"] = d["image_filename"].replace("\\","/")
 
-		if not self.options.url:
+		if self.options.url is None:
 			d["image_url"] = "../../%s" % image_filename
 		else:
 			d["image_url"] = "%s%s" % (self.options.url, image_filename)
+		d["image_url"] = d["image_url"].replace("\\","/")
 
 		url = self.options.url
-		if not url:
+		if url is None:
 			# Top level KML is linked from `doc.kml' and it needs different path.
 			if tz == self.tminz:
 				url = ""
 			else:
 				url = "../../"
-		d["link_url"] = "%s%s" % (url, get_tile_filename(tx, ty, tz, "kml"))
+
+		if self.options.kmz:
+			extension = "kmz"
+		else:
+			extension = "kml"
+
+		d["link_url"] = "%s%s" % (url, get_tile_filename(tx, ty, tz, extension))
+		d["link_url"] = d["link_url"].replace("\\","/")
 
 		d["minlodpixels"] = int(self.tilesize / 2)
 		d["maxlodpixels"] = -1 # int(self.tilesize * 8)
 
 		if tx == 0:
-			d["draw_order"] = 2 * tz + 1
+			d["draw_order"] = draworder + 2 * tz + 1
 		else:
-			d["draw_order"] = 2 * tz
+			d["draw_order"] = draworder + 2 * tz
 
 		return d
+
+	def get_verbose_tile_name(self, tx, ty, tz):
+		if self.options.tile_format == "hybrid":
+			extension = "?"
+		else:
+			extension = format_extension[self.image_output.format]
+
+		return self.image_output.get_full_path(tx, ty, tz, extension)
 
 	# -------------------------------------------------------------------------
 	def generate_tilemapresource(self):
@@ -1535,12 +1737,12 @@ gdal2tiles temp.vrt""" % self.input )
 		args['tilesize'] = self.tilesize
 		args['tileformat'] = format_extension[self.image_output.format]
 		args['mime'] = format_mime[self.image_output.format]
-		args['publishurl'] = self.options.url
+		args['publishurl'] = "" if self.options.url is None else self.options.url
 		args['profile'] = self.options.profile
 		
 		if self.options.profile == 'mercator':
-			args['srs'] = "EPSG:900913"
-		elif self.options.profile == 'geodetic':
+			args['srs'] = "EPSG:3857"
+		elif self.options.profile in ('geodetic', 'gearth'):
 			args['srs'] = "EPSG:4326"
 		elif self.options.s_srs:
 			args['srs'] = self.options.s_srs
@@ -1586,7 +1788,7 @@ gdal2tiles temp.vrt""" % self.input )
 		args['maxzoom'] = self.tmaxz
 		args['tilesize'] = self.tilesize
 		args['tileformat'] = format_extension[self.image_output.format]
-		args['publishurl'] = self.options.url
+		args['publishurl'] = "" if self.options.url is None else self.options.url
 		args['copyright'] = self.options.copyright
 
 		s = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -1618,6 +1820,7 @@ gdal2tiles temp.vrt""" % self.input )
 
 			    var opacity = 0.75;
 			    var map;
+			    var ge;
 			    var hybridOverlay;
 
 			    /*
@@ -1777,7 +1980,14 @@ gdal2tiles temp.vrt""" % self.input )
 			          hybridOverlay = new GTileLayerOverlay( G_HYBRID_MAP.getTileLayers()[1] );
 			          GEvent.addListener(map, "maptypechanged", function() {
 			            if (map.getCurrentMapType() == G_HYBRID_MAP) {
-			                map.addOverlay(hybridOverlay);
+			                map.addOverlay(hybridOverlay);""" % args
+		if self.kml:
+			s += """
+			            } else if (map.getCurrentMapType() == G_SATELLITE_3D_MAP) {
+			                var url = document.location.toString();
+			                if (url.substr(0,4) != 'http') alert('You have to upload the tiles to a webserver to see the overlay in Google Earth Plugin');
+			                if (!ge) map.getEarthInstance(getEarthInstanceCB);"""
+		s += """
 			            } else {
 			               map.removeOverlay(hybridOverlay);
 			            }
@@ -1809,14 +2019,13 @@ gdal2tiles temp.vrt""" % self.input )
 			          overlay = new GTileLayerOverlay( tilelayer );
 			          map.addOverlay(overlay);
 
-			          map.addControl(new GLargeMapControl());
+			          map.addControl(new GLargeMapControl3D());
 			          map.addControl(new GHierarchicalMapTypeControl());
 			          map.addControl(new CTransparencyControl( overlay ));
 		""" % args
 		if self.kml:
 			s += """
 			          map.addMapType(G_SATELLITE_3D_MAP);
-			          map.getEarthInstance(getEarthInstanceCB);
 		"""
 		s += """
 
@@ -1831,22 +2040,19 @@ gdal2tiles temp.vrt""" % self.input )
 		if self.kml:
 			s += """
 			    function getEarthInstanceCB(object) {
-			       var ge = object;
-
+			       ge = object;
+			       var url = document.location.toString();
+			       var newurl = url.substr(0,url.lastIndexOf('/'))+'/doc.kml';
 			       if (ge) {
-			           var url = document.location.toString();
-			           url = url.substr(0,url.lastIndexOf('/'))+'/doc.kml';
 			           var link = ge.createLink("");
 			           if ("%(publishurl)s") { link.setHref("%(publishurl)s/doc.kml") }
-			           else { link.setHref(url) };
+			           else { link.setHref(newurl) };
 			           var networkLink = ge.createNetworkLink("");
-			           networkLink.setName("TMS Map Overlay");
-			           networkLink.setFlyToView(true);  
-			           networkLink.setLink(link);
+			           networkLink.set(link, false, false);
 			           ge.getFeatures().appendChild(networkLink);
 			       } else {
-			           // alert("You should open a KML in Google Earth");
-			           // add div with the link to generated KML... - maybe JavaScript redirect to the URL of KML?
+			           // alert("Initialization of the Google Earth Plugin failed. You can still open the KML file in normal Google Earth.");
+			           // window.location = newurl; // JavaScript redirect to the URL of KML
 			       }
 			    }
 		""" % args
@@ -1891,14 +2097,14 @@ gdal2tiles temp.vrt""" % self.input )
 			args['has_alpha'] = 'true'
 		else:
 			args['has_alpha'] = 'false'
-		args['publishurl'] = self.options.url
+		args['publishurl'] = "" if self.options.url is None else self.options.url
 		args['copyright'] = self.options.copyright
-		if self.options.profile == 'raster':
+		if self.options.profile in ('raster', 'gearth'):
 			args['rasterzoomlevels'] = self.tmaxz+1
 			args['rastermaxresolution'] = 2**(self.nativezoom) * self.out_gt[1]
 
 		s = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-		<html xmlns="http://www.w3.org/1999/xhtml"
+		<html xmlns="http://www.w3.org/1999/xhtml>"
 		  <head>
 		    <title>%(title)s</title>
 		    <meta http-equiv='imagetoolbar' content='no'/>
@@ -1935,7 +2141,7 @@ gdal2tiles temp.vrt""" % self.input )
 			s += """
 	            var options = {
 	                controls: [],
-	                projection: new OpenLayers.Projection("EPSG:900913"),
+	                projection: new OpenLayers.Projection("EPSG:3857"),
 	                displayProjection: new OpenLayers.Projection("EPSG:4326"),
 	                units: "m",
 	                maxResolution: 156543.0339,
@@ -2032,7 +2238,7 @@ gdal2tiles temp.vrt""" % self.input )
 	            map.zoomToExtent( mapBounds );
 			""" % args
 			
-		elif self.options.profile == 'raster':
+		elif self.options.profile in ('raster', 'gearth'):
 			s += """
 	            var options = {
 	                controls: [],
@@ -2112,7 +2318,7 @@ gdal2tiles temp.vrt""" % self.input )
 	        }
 			""" % args
 			
-		elif self.options.profile == 'raster':
+		elif self.options.profile in ('raster','gearth'):
 			s += """
 	        function overlay_getTileURL(bounds) {
 	            var res = this.map.getResolution();
@@ -2176,21 +2382,21 @@ gdal2tiles temp.vrt""" % self.input )
 # =============================================================================
 
 
-def ImageOutput(name, out_ds, tile_size, resampling, nodata, output_dir):
+def ImageOutput(name, out_ds, tile_size, resampling, init_dest, output_dir, verbose):
 
 	"""Return object representing tile image output implementing given parameters."""
 
 	resampler = Resampler(resampling)
 
 	if name == "hybrid":
-		return HybridImageOutput(out_ds, tile_size, resampler, nodata, output_dir)
+		return HybridImageOutput(out_ds, tile_size, resampler, init_dest, output_dir, verbose)
 
 	if name == "png":
 		image_format = "PNG"
 	elif name == "jpeg":
 		image_format = "JPEG"
 
-	return SimpleImageOutput(out_ds, tile_size, resampler, nodata, output_dir, [image_format])
+	return SimpleImageOutput(out_ds, tile_size, resampler, init_dest, output_dir, verbose, [image_format])
 
 
 class ImageOutputException(Exception):
@@ -2210,22 +2416,20 @@ class BaseImageOutput(object):
 	a member field `format'.
 	"""
 
-	def __init__(self, out_ds, tile_size, resampler, nodata, output_dir, image_formats):
+	def __init__(self, out_ds, tile_size, resampler, init_dest, output_dir, verbose, image_formats):
 		self.out_ds = out_ds
 		self.tile_size = tile_size
 		self.resampler = resampler
-		self.nodata = nodata
+		self.init_dest = init_dest
 		self.output_dir = output_dir
+		self.verbose = verbose
 		self.image_formats = image_formats
 		if len(self.image_formats) == 1:
 			self.format = self.image_formats[0]
 
 		self.mem_drv = get_gdal_driver("MEM")
+		self.alpha = None
 		self.alpha_filler = None
-
-		# For raster with 4-bands: 4th unknown band set to alpha
-		if self.out_ds.RasterCount == 4 and self.out_ds.GetRasterBand(4).GetRasterColorInterpretation() == gdal.GCI_Undefined:
-			self.out_ds.GetRasterBand(4).SetRasterColorInterpretation(gdal.GCI_AlphaBand)
 
 		# Get alpha band (either directly or from NODATA value)
 		self.alpha_band = self.out_ds.GetRasterBand(1).GetMaskBand()
@@ -2235,30 +2439,38 @@ class BaseImageOutput(object):
 		else:
 			self.data_bands_count = self.out_ds.RasterCount
 
-	def create_base_tile(self, tx, ty, tz, xyzzy, alpha, image_format):
+	def write_base_tile(self, tx, ty, tz, xyzzy):
 
 		"""Create image of a base level tile and write it to disk."""
 
-		if alpha is None:
-			num_bands = self.data_bands_count
-		else:
-			num_bands = self.data_bands_count + 1
-
 		data_bands = range(1, self.data_bands_count+1)
-
-		dstile = self.mem_drv.Create('', self.tile_size, self.tile_size, num_bands)
 		data = self.out_ds.ReadRaster(xyzzy.rx, xyzzy.ry, xyzzy.rxsize, xyzzy.rysize,
 									  xyzzy.wxsize, xyzzy.wysize, band_list=data_bands)
+
+		image_format = self.get_base_tile_format(tx, ty, tz, xyzzy)
+
+		if image_format is None:
+			return
+		else:
+			num_bands = self.get_num_bands(image_format)
+
+		if self.verbose:
+			print "\tReadRaster Extent: ", (xyzzy.rx, xyzzy.ry, xyzzy.rxsize, xyzzy.rysize),
+			print (xyzzy.wx, xyzzy.wy, xyzzy.wxsize, xyzzy.wysize)
+
+		dstile = self.mem_drv.Create('', self.tile_size, self.tile_size, num_bands)
 
 		path = self.get_full_path(tx, ty, tz, format_extension[image_format])
 
 		# Query is in 'nearest neighbour' but can be bigger in then the tilesize
 		# We scale down the query to the tilesize by supplied algorithm.
 		if self.tile_size == xyzzy.querysize:
-			# Use the ReadRaster result directly in tiles ('nearest neighbour' query)
+			self.fill_init_dest(dstile)
+
+			# Use the ReadRaster result directly in tiles ('nearest neighbour' query) 
 			dstile.WriteRaster(xyzzy.wx, xyzzy.wy, xyzzy.wxsize, xyzzy.wysize, data, band_list=data_bands)
-			if alpha is not None:
-				dstile.WriteRaster(xyzzy.wx, xyzzy.wy, xyzzy.wxsize, xyzzy.wysize, alpha, band_list=[num_bands])
+			if image_format == "PNG":
+				dstile.WriteRaster(xyzzy.wx, xyzzy.wy, xyzzy.wxsize, xyzzy.wysize, self.alpha, band_list=[num_bands])
 
 			gdal_write(path, dstile, image_format)
 
@@ -2268,34 +2480,32 @@ class BaseImageOutput(object):
 		else:
 			# Big ReadRaster query in memory scaled to the tilesize - all but 'near' algo
 			dsquery = self.mem_drv.Create('', xyzzy.querysize, xyzzy.querysize, num_bands)
-
-			# TODO: fill the null value in case a tile without alpha is produced (now only png tiles are supported)
-			if alpha is None:
-				for i,v in enumerate(self.nodata[:num_bands]):
-					dsquery.GetRasterBand(i+1).Fill(v)
+			self.fill_init_dest(dsquery)
 
 			dsquery.WriteRaster(xyzzy.wx, xyzzy.wy, xyzzy.wxsize, xyzzy.wysize, data, band_list=data_bands)
-			if alpha is not None:
-				dsquery.WriteRaster(xyzzy.wx, xyzzy.wy, xyzzy.wxsize, xyzzy.wysize, alpha, band_list=[num_bands])
+			if image_format == "PNG":
+				dsquery.WriteRaster(xyzzy.wx, xyzzy.wy, xyzzy.wxsize, xyzzy.wysize, self.alpha, band_list=[num_bands])
 
 			self.resampler(path, dsquery, dstile, image_format)
 
-	def create_overview_tile(self, tx, ty, tz, image_format):
+		self.alpha = None
+
+	def write_overview_tile(self, tx, ty, tz):
 
 		"""Create image of a overview level tile and write it to disk."""
 
-		if image_format == "PNG":
-			num_bands = self.data_bands_count + 1
+		image_format = self.get_overview_tile_format(tx, ty, tz)
+
+		if image_format is None:
+			return
 		else:
-			num_bands = self.data_bands_count
+			num_bands = self.get_num_bands(image_format)
 
 		dsquery = self.mem_drv.Create('', 2*self.tile_size, 2*self.tile_size, num_bands)
+		self.fill_init_dest(dsquery)
 
-		if image_format == "PNG":
-			dsquery.GetRasterBand(num_bands).Fill(0)
-		else:
-			for i,v in enumerate(self.nodata[:num_bands]):
-				dsquery.GetRasterBand(i+1).Fill(v)
+		if self.verbose:
+			print "\tBuild from zoom", tz+1," tiles:", (2*tx, 2*ty), (2*tx+1, 2*ty),(2*tx, 2*ty+1), (2*tx+1, 2*ty+1)
 
 		for cx, cy, child_image_format in self.iter_children(tx, ty, tz):
 			if (ty==0 and cy==1) or (ty!=0 and (cy % (2*ty)) != 0):
@@ -2333,7 +2543,18 @@ class BaseImageOutput(object):
 					yield x, y, image_format
 
 	def read_alpha(self, xyzzy):
-		return self.alpha_band.ReadRaster(xyzzy.rx, xyzzy.ry, xyzzy.rxsize, xyzzy.rysize, xyzzy.wxsize, xyzzy.wysize)
+		self.alpha = self.alpha_band.ReadRaster(xyzzy.rx, xyzzy.ry, xyzzy.rxsize, xyzzy.rysize, xyzzy.wxsize, xyzzy.wysize)
+
+	def fill_init_dest(self, image):
+		if self.init_dest is not None:
+			for i,v in enumerate(self.init_dest[:image.RasterCount]):
+				image.GetRasterBand(i+1).Fill(v)
+
+	def get_num_bands(self, image_format):
+		if image_format == "JPEG":
+			return self.data_bands_count
+		else:
+			return self.data_bands_count + 1
 
 	def get_alpha_filler(self):
 		if self.alpha_filler is None:
@@ -2358,56 +2579,80 @@ class SimpleImageOutput(BaseImageOutput):
 
 	"""Image output using only one image format."""
 
-	def write_base_tile(self, tx, ty, tz, xyzzy):
+	def get_base_tile_format(self, tx, ty, tz, xyzzy):
 		if self.format == "PNG":
-			alpha = self.read_alpha(xyzzy)
-		else:
-			alpha = None
+			self.read_alpha(xyzzy)
 
-		self.create_base_tile(tx, ty, tz, xyzzy, alpha, self.format)
+		return self.format
 
-	def write_overview_tile(self, tx, ty, tz):
-		self.create_overview_tile(tx, ty, tz, self.format)
+	def get_overview_tile_format(self, tx, ty, tz):
+		return self.format
 
 
 class HybridImageOutput(BaseImageOutput):
 
 	"""Image output which skips fully transparent tiles, saves the fully opaque
 	as JPEG and the rest as PNG.
-	
-	Dummy files with extension `nil' are produced instead of the fully transparent
-	tiles. Otherwise the resume feature wouldn't work.
 	"""
 
-	def __init__(self, out_ds, tile_size, resampler, nodata, output_dir):
-		BaseImageOutput.__init__(self, out_ds, tile_size, resampler, nodata, output_dir, ["JPEG", "PNG"])
+	def __init__(self, out_ds, tile_size, resampler, init_dest, output_dir, verbose):
+		BaseImageOutput.__init__(self, out_ds, tile_size, resampler, init_dest, output_dir, verbose, ["JPEG", "PNG"])
 
-	def write_base_tile(self, tx, ty, tz, xyzzy):
-		alpha = self.read_alpha(xyzzy)
-		transparent, opaque = self.transparent_or_opaque(alpha)
+		img = self.mem_drv.Create("", self.tile_size, self.tile_size, 1)
+		rb = img.GetRasterBand(1)
+		rb.Fill(0)
+		self.transparent_checksum = rb.Checksum(0, 0, self.tile_size, self.tile_size)
+		rb.Fill(255)
+		self.opaque_checksum = rb.Checksum(0, 0, self.tile_size, self.tile_size)
 
-		if transparent:
-			return
-		elif opaque:
-			image_format = "JPEG"
-			alpha = None
+	def get_base_tile_format(self, tx, ty, tz, xyzzy):
+		if xyzzy.rxsize == self.tile_size and xyzzy.rysize == self.tile_size:
+			c = self.alpha_band.Checksum(xyzzy.rx, xyzzy.ry, self.tile_size, self.tile_size)
+
+			if c == self.transparent_checksum:
+				if self.verbose:
+					print "\tTile generation skipped because it is fully transparent"
+				return None
+			elif c == self.opaque_checksum:
+				image_format = "JPEG"
+			else:
+				image_format = "PNG"
+				self.read_alpha(xyzzy)
 		else:
-			image_format = "PNG"
+			self.read_alpha(xyzzy)
+			transparent, opaque = self.transparent_or_opaque(self.alpha)
 
-		self.create_base_tile(tx, ty, tz, xyzzy, alpha, image_format)
+			if transparent:
+				if self.verbose:
+					print "\tTile generation skipped because it is fully transparent"
+				return None
+			elif opaque:
+				image_format = "JPEG"
+			else:
+				image_format = "PNG"
 
-	def write_overview_tile(self, tx, ty, tz):
+		if self.verbose:
+			print "\tSaving tile in %s format" % image_format
+
+		return image_format
+
+	def get_overview_tile_format(self, tx, ty, tz):
 		children = list(self.iter_children(tx, ty, tz))
 
 		if len(children) == 0:
-			return
+			if self.verbose:
+				print "\tTile generation skipped because it is fully transparent"
+			return None
 
 		if any(image_format == "PNG" for x, y, image_format in children) or len(children) < 4:
 			image_format = "PNG"
 		else:
 			image_format = "JPEG"
 
-		self.create_overview_tile(tx, ty, tz, image_format)
+		if self.verbose:
+			print "\tSaving tile in %s format" % image_format
+
+		return image_format
 
 	def transparent_or_opaque(self, alpha):
 		transparent = opaque = True
@@ -2445,7 +2690,11 @@ def Resampler(name):
 			im1 = Image.composite(im1, im0, im1)
 
 		ensure_dir_exists(path)
-		im1.save(path, image_format)
+
+		if image_format == "JPEG":
+			im1.save(path, image_format, quality=jpeg_quality)
+		else:
+			im1.save(path, image_format)
 
 
 	if name == "average":
@@ -2482,7 +2731,11 @@ def Resampler(name):
 def gdal_write(path, dstile, image_format):
 	ensure_dir_exists(path)
 	driver = get_gdal_driver(image_format)
-	driver.CreateCopy(path, dstile, strict=0)
+
+	if image_format == "JPEG":
+		driver.CreateCopy(path, dstile, strict=0, options=jpeg_gdal_options)
+	else:
+		driver.CreateCopy(path, dstile, strict=0)
 
 
 def get_gdal_driver(name):
@@ -2518,6 +2771,55 @@ class Xyzzy(object):
 		self.wxsize = wxsize
 		self.wysize = wysize
 
+# ------------------------------------------------
+# Functions for calculating KML <LookAt> tag:
+
+def angular_distance(lng1, lat1, lng2, lat2):
+	"""
+	Haversine formula on sphere - for higher precission on ellipsoid use the Vincenty formula
+	http://www.movable-type.co.uk/scripts/latlong.html
+	"""
+
+	phi1 = math.radians(lat1)
+	phi2 = math.radians(lat2)
+
+	d_phi = math.radians(lat2 - lat1)
+	d_lmd = math.radians(lng2 - lng1)
+
+	A = math.pow(math.sin(d_phi / 2), 2) + \
+		math.cos(phi1) * math.cos(phi2) * \
+		math.pow(math.sin(d_lmd / 2), 2)
+
+	return 2 * math.atan2(math.sqrt(A), math.sqrt(1 - A))
+
+def computeFitLookAt(minlng, minlat, maxlng, maxlat):
+	"Ported from http://code.google.com/p/earth-api-samples/source/browse/trunk/lib/ge-poly-fit-hack.js"
+
+	DEGREES = math.pi / 180.0
+	EARTH_RADIUS = 6378137
+
+	viewrange = 0.0
+	center = [ minlng+(maxlng-minlng)/2.0, minlat+(maxlat-minlat)/2.0 ]
+
+	lngSpan = EARTH_RADIUS * angular_distance(center[0], minlat, center[0], maxlat)
+	latSpan = EARTH_RADIUS * angular_distance(minlng, center[1], maxlng, center[1])
+
+	aspectRatio = 1.0
+	PAD_FACTOR = 1.5 # add 50% to the computed range for padding
+
+	aspectUse = max(aspectRatio, min(1.0, lngSpan / latSpan))
+	alpha = (45.0 / (aspectUse + 0.4) - 2.0) * DEGREES # computed experimentally
+
+	# create LookAt using distance formula
+	if (lngSpan > latSpan): # polygon is wide
+		beta = min(90 * DEGREES, alpha + lngSpan / 2 / EARTH_RADIUS)
+	else: # polygon is taller
+		beta = min(90 * DEGREES, alpha + latSpan / 2 / EARTH_RADIUS)
+
+	viewrange = PAD_FACTOR * EARTH_RADIUS * (math.sin(beta) * \
+		math.sqrt(1 / math.pow(math.tan(alpha),2) + 1) - 1)
+
+	return center[0], center[1], viewrange
 
 # =============================================================================
 
@@ -2525,5 +2827,5 @@ class Xyzzy(object):
 if __name__=='__main__':
 	argv = gdal.GeneralCmdLineProcessor( sys.argv )
 	if argv:
-		gdal2tiles = GDAL2Tiles( argv[1:] )
+		gdal2tiles = GDAL2Tiles( argv[1:], gdalcache=128*1024*1024 )
 		gdal2tiles.process()

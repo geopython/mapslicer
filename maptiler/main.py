@@ -11,7 +11,9 @@ import config
 import icons
 import wizard
 import widgets
+import gdalpreprocess
 
+from bug_report import do_bug_report_dialog
 import wxgdal2tiles as wxgdal
 
 # TODO: GetText
@@ -50,6 +52,8 @@ class MainFrame(wx.Frame):
 		menu = wx.Menu()
 		item = menu.Append(wx.NewId(), _("Insert &raster map files"))
 		self.Bind(wx.EVT_MENU, self.OnOpen, item)
+		self.bug_report = menu.Append(wx.NewId(), _("Send a &bug report"))
+		self.Bind(wx.EVT_MENU, self.OnBugReport, self.bug_report)
 		#item = menu.Append(wx.ID_PREFERENCES, _("&Preferences"))
 		#self.Bind(wx.EVT_MENU, self.OnPrefs, item)
 		item = menu.Append(wx.ID_EXIT, _("&Exit"))
@@ -59,8 +63,10 @@ class MainFrame(wx.Frame):
 		menu = wx.Menu()
 		item = menu.Append(wx.ID_HELP, _("Online &Help && FAQ"))
 		self.Bind(wx.EVT_MENU, self.OnHelp, item)
-		item = menu.Append(wx.NewId(), _("MapTiler user &group"))
+		item = menu.Append(wx.NewId(), _("MapTiler User &Group"))
 		self.Bind(wx.EVT_MENU, self.OnGroupWeb, item)
+		item = menu.Append(wx.NewId(), _("Donation"))
+		self.Bind(wx.EVT_MENU, self.OnDonate, item)
 		item = menu.Append(wx.NewId(), _("Project &website"))
 		self.Bind(wx.EVT_MENU, self.OnProjectWeb, item)
 		item = menu.Append(wx.ID_ABOUT, _("&About"))
@@ -88,10 +94,10 @@ class MainFrame(wx.Frame):
 		self.steplabel.append(wx.StaticText(self, -1, _("Viewer Details")))
 		self.steplabel.append(wx.StaticText(self, -1, _("Rendering")))
 		
-		self.label_10 = wx.StaticText(self, -1, _("MapTiler - Map Tile Generator for Mashups"))
+		self.label_10 = wx.StaticText(self, -1, _("MapTiler - Tile Generator for Map Mashups"))
 		
 		self.label_8 = wx.StaticText(self, -1, _("http://www.maptiler.org/"))
-		self.label_9 = wx.StaticText(self, -1, _(u"(C) 2008 - Klokan Petr Přidal"))
+		self.label_9 = wx.StaticText(self, -1, _(u"(C) 2009 - Klokan Petr Přidal"))
 
 		self.button_back = wx.Button(self, -1, _("Go &Back"))
 		self.Bind(wx.EVT_BUTTON, self.OnBack, self.button_back)
@@ -110,8 +116,11 @@ class MainFrame(wx.Frame):
 		self.__do_layout()
 
 	def __set_properties(self):
-		self.SetTitle(_("MapTiler - Map Tile Generator for Mashups"))
-		if sys.platform in ['win32','win64'] or sys.platform.startswith('linux'):
+		self.SetTitle(_("MapTiler - Tile Generator for Map Mashups"))
+		if sys.platform in ['win32','win64']:
+			icon = wx.Icon( sys.executable, wx.BITMAP_TYPE_ICO )
+			self.SetIcon( icon )
+		if sys.platform.startswith('linux'):
 			self.SetIcon( icons.getIconIcon() )
 		self.SetBackgroundColour(wx.Colour(253, 253, 253))
 		for label in self.steplabel[1:]:
@@ -183,6 +192,9 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 	def OnProjectWeb(self, event):
 		webbrowser.open_new(_("http://www.maptiler.org"))
 
+	def OnDonate(self, event):
+		webbrowser.open_new(config.DONATE_URL)
+
 	def OnGroupWeb(self, event):
 		webbrowser.open_new(_("http://groups.google.com/group/maptiler"))
 
@@ -203,12 +215,31 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		if dlg.ShowModal() == wx.ID_OK:
 			paths = dlg.GetPaths()
 
-			for path in paths:
-				self._add(path)
-				
-		dlg.Destroy()
+			bad_paths = [path for path in paths	if not os.access(path, os.R_OK)]
+			if len(bad_paths) > 0:
+				wx.MessageBox(_("MapTiler doesn't have permission to read the following files:\n\n") + "\n".join(bad_paths),
+					_("Bad permissions"), wx.ICON_ERROR)
+				return
+			else:
+				for path in paths:
+					try:
+						self._add(path)
+					except gdalpreprocess.PreprocessError, e:
+						wx.MessageBox(str(e), _("Can't add a file"), wx.ICON_ERROR)
+						return
+
 		step = self.html.GetActiveStep()
 		self.SetStep(2)
+
+	def OnBugReport(self, event):
+		if len(config.files) == 0:
+			wx.MessageBox(_("""
+The bug report feature is intended for reporting issues with specific \
+input files. You have not selected any yet."""), _("No input files selected"), wx.ICON_INFORMATION)
+			return
+
+		do_bug_report_dialog(self, "", self.html.GetActiveStep())
+
 
 	def OnPrefs(self, event):
 		dlg = wx.MessageDialog(self, _("This would be an preferences Dialog\n")+
@@ -287,18 +318,36 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 			if config.files[0][1] != '':
 				print type(config.srs)
 				print config.srs
-				try:
-					from gdalpreprocess import SRSInput
-					srs = SRSInput(config.srs)
-				except Exception, error:
-					wx.MessageBox("""%s""" % error , _("The SRS definition is not correct"), wx.ICON_ERROR)
-					return
+				srs = gdalpreprocess.SRSInput(config.srs)
 				print srs
 				if not srs:
 					wx.MessageBox(_("""You have to specify reference system of your coordinates.\n\nTIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'"""), _("Not valid spatial reference system"), wx.ICON_ERROR)
 					return
 				else:
 					config.srs = srs
+		if step == 5:
+			self.html.SaveStep(5)
+
+			# If the user selected the output directory himself.
+			if os.path.exists(config.outputdir):
+				if not os.access(config.outputdir, os.W_OK):
+					wx.MessageBox(_("The selected output directory '%s' is not writeable.") % config.outputdir,
+						_("Bad permissions"), wx.ICON_ERROR)
+					return
+			# Default output directory on Windows and Mac.
+			else:
+				dirname = os.path.split(config.outputdir)[0]
+				if not os.access(dirname, os.W_OK):
+					wx.MessageBox(_("""The selected output directory '%s' can't be created, \
+because its superdirectory '%s' is not writeable.""") % (config.outputdir, dirname),
+						_("Bad permissions"), wx.ICON_ERROR)
+					return
+
+		if step == 5 and config.profile == 'gearth':
+			self.html.SaveStep(5)
+			if config.format.startswith('garmin'):
+				step = 6 # Skip settings of the viewers
+
 		if step == 8:
 			self._renderstart()
 			self.SetStep( 8 )
@@ -314,12 +363,11 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		if len(config.files) > 0:
 			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
 
-		from gdalpreprocess import singlefile
-		filerecord = singlefile(filename)
+		filerecord = gdalpreprocess.singlefile(filename)
 		if filerecord:
 			config.files = []
 			config.files.append(filerecord)
-		
+
 	def _renderstop(self):
 		
 		self.g2t.stop()
@@ -327,11 +375,13 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		self.rendering = False
 		self.resume = True
 		self.html.UpdateRenderText(_("Rendering stopped !!!!"))
+		self.html.StopThrobber()
 			
 	def _renderstart(self):
 		self.abortEvent.clear()
 		self.rendering = True
 		self.html.UpdateRenderText(_("Started..."))
+		self.html.StartThrobber()
 		self.jobID += 1
 		
 		params = self.createParams()
@@ -344,11 +394,12 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 	
 	def createParams(self):
 		
-		params = ['--profile',config.profile,
+		params = ['--profile',config.profile if not config.format.startswith('garmin') else 'garmin',
 			'--s_srs',config.srs,
 			'--zoom',"%i-%i" % (config.tminz, config.tmaxz),
 			'--title',config.title,
-			'--copyright',config.copyright
+			'--copyright',config.copyright,
+			'--tile-format', config.format if not config.format.startswith('garmin') else 'jpeg'
 			]
 		viewer = 'none'
 		if config.google:
@@ -360,7 +411,13 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		params.extend(['--webviewer',viewer])
 		if config.kml:
 			params.append('--force-kml')
-		
+
+		if config.nodata:
+			params.extend(['--srcnodata','%f,%f,%f' % config.nodata])
+
+		if config.format.startswith('garmin'):
+			params.extend(['--tilesize',config.format[6:]])
+
 		if config.url:
 			params.extend(['--url',config.url])
 		if config.googlekey:
@@ -385,48 +442,57 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		self.html.UpdateRenderProgress(event.progress)
 
 	def _resultProducer(self, jobID, abortEvent, params):
+		try:
+			if self.resume and params[0] != '--resume':
+				params.insert(0, '--resume')
 
-		#params = ['first.tif']
-		#params = ['--s_srs','EPSG:4326','/Users/klokan/Desktop/fox-denali-alaska-644060-xl.jpg']
-		if self.resume and params[0] != '--resume':
-			params.insert(0, '--resume')
+			self.g2t = wxgdal.wxPPGDAL2Tiles(params)
+			self.g2t.set_event_handler(self)
 
-		self.g2t = wxgdal.wxGDAL2Tiles( params )
-		self.g2t.setEventHandler( self )
+			wx.PostEvent(self, GenericGuiEvent(_("Opening the input files")))
+			self.g2t.open_input()
+			# Opening and preprocessing of the input file
 
-		wx.PostEvent(self, GenericGuiEvent(_("Opening the input files")))
-		self.g2t.open_input()
-		# Opening and preprocessing of the input file
+			if not self.g2t.stopped and not abortEvent():
+				wx.PostEvent(self, GenericGuiEvent(_("Generating viewers and metadata")))
+				# Generation of main metadata files and HTML viewers
+				self.g2t.generate_metadata()
 
-		if not self.g2t.stopped and not abortEvent():
-			wx.PostEvent(self, GenericGuiEvent(_("Generating viewers and metadata")))
-			# Generation of main metadata files and HTML viewers
-			self.g2t.generate_metadata()
+			if not self.g2t.stopped and not abortEvent():
+				wx.PostEvent(self, GenericGuiEvent(_("Rendering the base tiles")))
+				# Generation of the lowest tiles
+				self.g2t.generate_base_tiles()
 
-		if not self.g2t.stopped and not abortEvent():
-			wx.PostEvent(self, GenericGuiEvent(_("Rendering the base tiles")))
-			# Generation of the lowest tiles
-			self.g2t.generate_base_tiles()
+			if not self.g2t.stopped and not abortEvent():
+				wx.PostEvent(self, GenericGuiEvent(_("Rendering the overview tiles in the pyramid")))
+				# Generation of the overview tiles (higher in the pyramid)
+				self.g2t.generate_overview_tiles()
 
-		if not self.g2t.stopped and not abortEvent():
-			wx.PostEvent(self, GenericGuiEvent(_("Rendering the overview tiles in the pyramid")))
-			# Generation of the overview tiles (higher in the pyramid)
-			self.g2t.generate_overview_tiles()
-	
+			if not self.g2t.stopped and not abortEvent():
+				wx.PostEvent(self, GenericGuiEvent(_("Generating KML")))
+				# Generation of KML
+				self.g2t.generate_kml()
+
+		except Exception, e:
+			self.g2t = e
+
 	def _resultConsumer(self, delayedResult):
 		jobID = delayedResult.getJobID()
 		assert jobID == self.jobID
-		try:
-			result = delayedResult.get()
-		except Exception, exc:
-			#print "Result for job %s raised exception: %s" % (jobID, exc)
-			return
+		result = delayedResult.get()
 
-		if not self.g2t.stopped:
-			#wx.PostEvent(self, GenericGuiEvent(_("Task is finished!")))
-			self.SetStep(9)
+		if isinstance(self.g2t, Exception):
 			self.rendering = False
 			self.resume = False
+			self.SetStep(8)
+			wx.PostEvent(self, GenericGuiEvent(_("Rendering error!")))
+			self.html.StopThrobber()
+			raise self.g2t
+
+		elif not self.g2t.stopped:
+			self.rendering = False
+			self.resume = False
+			self.SetStep(9)
 
 
 # end of class MainFrame

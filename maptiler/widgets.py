@@ -8,10 +8,13 @@ import wx
 import wx.combo
 import wx.lib.hyperlink
 import wx.lib.intctrl
+import wx.lib.buttons
+import wx.lib.throbber
 import config
 import webbrowser
+import icons
 
-from config import nodata
+import gdalpreprocess
 
 # TODO: GetText
 _ = lambda s: s
@@ -120,18 +123,21 @@ class FilePanel(wx.Panel):
 			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
 		
 		filename = filename.encode('utf8')
-		from gdalpreprocess import singlefile
-		filerecord = singlefile(filename)
-		if filename:
-			config.files = []
-			config.files.append(filerecord)
-		
-			self.lc.SetItemCount(len(config.files))
-			self.lc.Refresh(False)
-			if len(config.files):
-				self.bdel.Enable()
-			self.resume = False
-	
+
+		try:
+			filerecord = gdalpreprocess.singlefile(filename)
+			if filename:
+				config.files = []
+				config.files.append(filerecord)
+
+				self.lc.SetItemCount(len(config.files))
+				self.lc.Refresh(False)
+				if len(config.files):
+					self.bdel.Enable()
+				self.resume = False
+		except gdalpreprocess.PreprocessError, e:
+			wx.MessageBox(str(e), _("Can't add a file"), wx.ICON_ERROR)
+
 	def onAdd(self, evt):
 		dlg = wx.FileDialog(
 			self, message=_("Choose a file"),
@@ -149,12 +155,17 @@ class FilePanel(wx.Panel):
 
 			#print 'You selected %d files:' % len(paths)
 
-			for path in paths:
-				#print '%s\n' % path
-				#files.append([filename,"None"])
-				#self.lc.SetItemCount(len(files))
-				self._add(path)
-				
+			bad_paths = [path for path in paths	if not os.access(path, os.R_OK)]
+			if len(bad_paths) > 0:
+				wx.MessageBox(_("MapTiler doesn't have permission to read the following files:\n\n") + "\n".join(bad_paths),
+					_("Bad permissions"), wx.ICON_ERROR)
+			else:
+				for path in paths:
+					#print '%s\n' % path
+					#files.append([filename,"None"])
+					#self.lc.SetItemCount(len(files))
+					self._add(path)
+
 	def onDelete(self, evt):
 		del config.files[ self.lc.GetFirstSelected() ]
 		self.lc.SetItemCount(len(config.files))
@@ -166,14 +177,15 @@ class FilePanel(wx.Panel):
 	def onGeoreference(self, evt):
 		bbox = None
 		dlg = wx.TextEntryDialog(
-				self, _("Please specify bounding box for '%s' as 4 numbers\nFormat: 'north south east west'\n\nAlternatively you can create a world file (.wld) or (.tab) by an external GIS software") % config.files[ self.lc.GetFirstSelected() ][0],
+				self, _("Please specify bounding box as 4 numbers or a world file as 6 numbers\nFormat: 'north south east west'\n\nAlternatively you can create a world file (.wld) or (.tab) by an external GIS software"),
 				_('Georeference with bounding box'), '90 -90 180 -180')
-
-		#dlg.SetValue("Python is the best!")
 
 		if dlg.ShowModal() == wx.ID_OK:
 			str = dlg.GetValue()
-			str.replace(',','.')
+			if str.find('.') == -1:
+				str = str.replace(',','.')
+			if str.find(',') != -1:
+				str = str.replace(',',' ')
 			print str
 			try:
 				bbox = map(float, str.split())
@@ -210,7 +222,12 @@ class NodataPanel(wx.Panel):
 		self.ch1 = wx.CheckBox(self, -1, _("Set transparency for a color (NODATA):"))
 		sizer.Add(self.ch1)
 		
-		self.color = (0,0,0)
+		if config.nodata:
+			self.color = config.nodata
+			self.ch1.SetValue(True)
+		else:
+			self.ch1.SetValue(False)
+			self.color = (0,0,0)
 
 		bmp = wx.EmptyBitmap(16, 16)
 		dc = wx.MemoryDC(bmp)
@@ -224,8 +241,7 @@ class NodataPanel(wx.Panel):
 		self.SetSizer(sizer)
 		self.Bind(wx.EVT_BUTTON, self.onColor, self.bcolor)
 		
-		self.ch1.Enable(False)
-		self.bcolor.Enable(False)
+		#self.bcolor.Enable(False)
 		
 	def onColor(self, evt):
 		color = wx.ColourData()
@@ -254,6 +270,7 @@ class NodataPanel(wx.Panel):
 						
 			self.bcolor.SetBitmapLabel(bmp)
 			self.ch1.SetValue(True)
+			config.nodata = self.color
 
 		# Once the dialog is destroyed, Mr. wx.ColourData is no longer your
 		# friend. Don't use it again!
@@ -263,7 +280,7 @@ class NodataPanel(wx.Panel):
 		if self.ch1.GetValue():
 			return self.color
 		else:
-			return None 
+			return None
 		
 class SpatialReferencePanel(wx.Panel):
 	def __init__(self, parent, id=-1, size=wx.DefaultSize, name = ''):
@@ -432,48 +449,7 @@ class SpatialReferencePanel(wx.Panel):
 	def GetSelection(self):
 		return self.ch1.GetSelection()
 
-class ProgressPanel(wx.Panel):
+class Throbber(wx.lib.throbber.Throbber):
 
-	def __init__(self, parent, id=-1, size=wx.DefaultSize, name=''):
-		wx.Panel.__init__(self, parent, id, size=size, name=name)
-		self.SetBackgroundColour('#ffffff')
-		
-		self.value = 0
-
-		vsizer = wx.BoxSizer(wx.VERTICAL)
-		
-		self.g1 = wx.Gauge(self, -1)
-		vsizer.Add(self.g1, 1, wx.EXPAND|wx.ALL,0)
-
-		hsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.ptext = wx.StaticText(self, -1, _("Click on the 'Render' button to start the rendering..."))
-		hsizer.Add(self.ptext, 1, wx.EXPAND|wx.ALL,3)
-		self.pnum = wx.StaticText(self,-1, "0 %")
-		hsizer.Add(self.pnum, 0, wx.EXPAND|wx.ALL,3)
-		import wx.animate
-		self.panim = wx.animate.GIFAnimationCtrl(self,-1,"resources/ajax-loader-small.gif")
-		# Better to use list of bitmaps and wx.lib.throbber
-		hsizer.Add(self.panim, 0, wx.EXPAND|wx.ALL, 3)
-		
-		vsizer.Add(hsizer, 0, wx.EXPAND|wx.ALL,0)
-		
-		self.SetSizer(vsizer)
-		
-	def SetValue(self, value):
-		if value == -1:
-			self.panim.Stop()
-			return
-		if self.value == 0 and value != 0:
-			self.panim.Show()
-			self.panim.Play()
-		if value == 0:
-			self.panim.Hide()
-			self.pnum.Hide()
-			self.panim.Stop()
-		else:
-			self.pnum.SetLabel("%i %" % value)
-		self.value = value
-		self.g1.SetValue(value)
-		
-	def SetLabel(self, label):
-		self.ptext.SetLabel(label)
+	def __init__(self, parent, id=-1, icon="", pos=wx.DefaultPosition, size=wx.DefaultSize, name=""):
+		wx.lib.throbber.Throbber.__init__(self, parent, id, icons.getThrobberBitmap(), pos, size, frames=12, frameWidth=16, overlay=icons.getWhite16Bitmap(), name=name)

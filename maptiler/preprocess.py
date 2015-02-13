@@ -175,7 +175,7 @@ class file_info:
 			t_fh.write('\t\t\t<SourceBand>1</SourceBand>\n')
 		else:
 			t_fh.write('\t\t\t<SourceBand>%i</SourceBand>\n' % s_band)
-		if self.palette or nodata:
+		if nodata:
 			t_fh.write('\t\t\t<NoData>%f</NoData>\n' % nodata[s_band])
 		t_fh.write('\t\t\t<SourceProperties RasterXSize="%i" RasterYSize="%i" DataType="%s" BlockXSize="%i" BlockYSize="%i"/>\n' \
 			% (self.xsize, self.ysize, self.datatypename, self.blocksizex, self.blocksizey))

@@ -1,4 +1,4 @@
-version = "1.0 alpha3"
+version = "1.0 beta2"
 
 profile = 'mercator'
 files = []
@@ -8,9 +8,10 @@ customsrs = ""
 srsformat = 0
 tminz = 0
 tmaxz = 0
+format = False
 resume = False
 kml = False
-outputdir = ""
+outputdir = None
 url = "http://" # TODO: Do not submit this to the command-line
 viewer_google = False
 viewer_openlayers = False
@@ -23,6 +24,7 @@ documentsdir = ""
 
 bboxgeoref = False
 
+DONATE_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=1806586"
 
 # TODO: GetText
 _ = lambda s: s

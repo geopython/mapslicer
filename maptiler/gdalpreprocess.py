@@ -6,11 +6,20 @@ import tempfile
 import os
 import preprocess
 
+#TODO: GetText
+from config import _
+
 gdal.AllRegister()
 vrt_drv = gdal.GetDriverByName( 'VRT' )
 
 palettecolors = ['Red','Green','Blue','Alpha']
 reference = osr.SpatialReference()
+
+
+class PreprocessError(Exception):
+
+	"""To distinguish errors from exceptions in this module."""
+
 
 def singlefile(filename, bbox = None):
 	"Returns [visible-filename, visible-georeference, realfilename, geotransform, xsize, ysize, srs]"
@@ -24,7 +33,7 @@ def singlefile(filename, bbox = None):
 	in_ds = gdal.Open( filename, gdal.GA_ReadOnly)
 	if not in_ds:
 		# Note: GDAL prints the ERROR message too
-		raise "It is not possible to open the input file '%s'." % filename
+		raise PreprocessError(_("It is not possible to open the input file '%s'.") % filename)
 
 	xsize = in_ds.RasterXSize
 	ysize = in_ds.RasterYSize
@@ -37,12 +46,21 @@ def singlefile(filename, bbox = None):
 		# TODO: set geotransform from [ulx, uly, lrx, lry] + xsize, ysize
 		geotransform = [0.0,0.0,0.0,0.0,0.0,0.0]
 		
-		geotransform[0] = bbox[3]
-		geotransform[1] = (bbox[2] - bbox[3]) / float(xsize)
-		geotransform[2] = 0.0
-		geotransform[3] = bbox[0]
-		geotransform[4] = 0.0
-		geotransform[5] = (bbox[1] - bbox[0]) / float(ysize)
+		if len(bbox) > 4: # world file - affine transformation
+			geotransform[1] = bbox[0] # width of pixel
+			geotransform[4] = bbox[1] # rotational coefficient, zero for north up images.
+			geotransform[2] = bbox[2] # rotational coefficient, zero for north up images.
+			geotransform[5] = bbox[3] # height of pixel (but negative)
+			geotransform[0] = bbox[4] - 0.5*bbox[0] - 0.5*bbox[2] # x offset to center of top left pixel.
+			geotransform[3] = bbox[5] - 0.5*bbox[1] - 0.5*bbox[3] # y offset to center of top left pixel.
+			
+		else: # bounding box
+			geotransform[0] = bbox[3]
+			geotransform[1] = (bbox[2] - bbox[3]) / float(xsize)
+			geotransform[2] = 0.0
+			geotransform[3] = bbox[0]
+			geotransform[4] = 0.0
+			geotransform[5] = (bbox[1] - bbox[0]) / float(ysize)
 
 		in_ds.SetGeoTransform(geotransform)
 

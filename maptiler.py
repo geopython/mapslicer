@@ -10,7 +10,7 @@ if hasattr(sys, "frozen") or sys.executable.find('MapTiler.app') != -1:
 	exepath = os.path.dirname(sys.executable)
 
 # Windows: set the GDAL and PROJ variables ..
-if sys.platform in ['win32','win64'] and not os.environ.has_key('GDAL_DATA'):
+if sys.platform in ['win32','win64']:
 	# .. to the local directory in the py2exe distribution
 	if os.path.exists(os.path.join( exepath, "gdal" )):
 		os.environ['PROJ_LIB'] = os.path.join( exepath, "proj" )
@@ -34,12 +34,15 @@ if sys.platform == 'darwin' and not os.environ.has_key('GDAL_DATA'):
 	os.environ['GDAL_DATA'] = os.path.join( frameworkpath, "GDAL.framework/Resources/gdal/" )
 	os.environ['GDAL_DRIVER_PATH'] = os.path.join( frameworkpath, "GDAL.framework/PlugIns/" )
 	sys.path.insert(0, os.path.join( frameworkpath, "GDAL.framework/Versions/Current/Python/site-packages/" ))
-	sys.path.insert(0, "/System/Library/Frameworks/Python.framework/Versions/Current/Extras/lib/python/")
 
 # Other systems need correctly installed GDAL libraries
 
+import traceback
 import wx
 import maptiler
+
+from maptiler.bug_report import do_bug_report_dialog
+
 __version__ = maptiler.version
 
 class MapTilerApp(wx.App):
@@ -56,6 +59,21 @@ class MapTilerApp(wx.App):
 		
 	def Show(self):
 		self.main_frame.Show()
+
+	def ExceptHook(self, type, value, tb):
+		back_trace = "".join(traceback.format_exception(type, value, tb))
+
+		print
+		print "=============================================================="
+		print back_trace
+		print
+
+		caption = _("Exception occured")
+		message = _("An unexpected error occured:\n\n") + str(value) + _("\n\nDo you want to send an anonymous bug report?")
+
+		if wx.MessageBox(message, caption, wx.ICON_ERROR | wx.YES_NO) == wx.YES:
+			do_bug_report_dialog(self.main_frame, back_trace, self.main_frame.html.GetActiveStep())
+
 
 if __name__ == "__main__":
 	
@@ -96,8 +114,6 @@ http://trac.osgeo.org/gdal/wiki/BuildHints"""), _("Error: GDAL library not found
 			sys.exit(1)
 		print _("GDAL library not available - please install GDAL and it's python module!")
 
+	sys.excepthook = app.ExceptHook
 	app.Show()
-	wx.MessageBox(_("""This is a development version of MapTiler application.
-It has known bugs and limits.\n
-It is not for production use but for testing and preview!"""), _("MapTiler Alpha version (%s)") % __version__, wx.OK | wx.ICON_INFORMATION)
 	app.MainLoop()
