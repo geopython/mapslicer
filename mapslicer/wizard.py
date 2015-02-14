@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# TODO: Cleaning the code, refactoring before 1.0 publishing
 
 import os
 import sys
@@ -27,11 +26,10 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 		# add the donate image to the MemoryFileSystem:
         mfs = wx.MemoryFSHandler()
         wx.FileSystem_AddHandler(mfs)
-        mfs.AddFile("donatebtn.png", icons.getDonateBtnData(), wx.BITMAP_TYPE_PNG)
 
 	def OnLinkClicked(self, linkinfo):
 		webbrowser.open_new(linkinfo.GetHref())
-		
+
 	def GetActiveStep(self):
 		return self.step 
 
@@ -110,39 +108,12 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 				# Default name is the same as the input file without extensions.
 				config.outputdir = os.path.join(base_dir, os.path.splitext(os.path.basename( filename ))[0] )
 
-				# GTK2 doesn't allow to select nonexisting directories, so we have to make it exist.
-				if sys.platform.startswith("linux"):
-					if not os.path.exists(config.outputdir):
-						try:
-							os.makedirs(config.outputdir)
-							config.gtk2_hack_directory = config.outputdir
-						except Exception, e:
-							config.outputdir = os.getcwd()
-							config.gtk2_hack_directory = None
+			browseButton = self.FindWindowByName('browsebutton')
+			if browseButton:
+				browseButton.Bind(wx.EVT_BUTTON, self.OnBrowseButtonPressed)
+			self.FindWindowByName('outputdir').SetValue(config.outputdir)
 
-							# I hate it when I have to do this.
-							wx.MessageBox(_("""\
-We are terribly sorry for this error. It is a known issue stemming from the fact that we try hard to \
-support all major software platforms -- Microsoft Windows, Mac OS X and UNIX systems. Unfortunately \
-they don't have all the same capabilities.
-
-You are processing file '%s' for which we can't provide default output directory, because both our \
-options -- input file directory '%s' and your current working directory '%s' -- are not writeable. \
-Please select the output directory on your own.""") % (filename, input_dir, os.getcwd()),
-							_("Can't create default output directory"), wx.ICON_ERROR)
-					else:
-						config.gtk2_hack_directory = None
-
-			self.FindWindowByName('outputdir').SetPath(config.outputdir)
 		elif step == 6:
-			# GTK2 hack. See above.
-			if sys.platform.startswith("linux") and config.gtk2_hack_directory is not None:
-				if config.gtk2_hack_directory != config.outputdir:
-					try:
-						os.rmdir(config.gtk2_hack_directory)
-					except:
-						pass
-
 			not_hybrid = config.format != 'hybrid'
 			if config.profile=='mercator':
 				self.FindWindowByName('google').Enable(not_hybrid)
@@ -161,18 +132,18 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 				self.FindWindowByName('google').Enable(False)
 				self.FindWindowByName('openlayers').Enable(not_hybrid)
 				self.FindWindowByName('kml').Enable(True)
-				
+
 			self.FindWindowByName('google').SetValue(config.google)
 			self.FindWindowByName('openlayers').SetValue(config.openlayers)
 			self.FindWindowByName('kml').SetValue(config.kml)
-			
+
 		elif step == 7:
 			config.title = os.path.basename( config.files[0][0] )
 			self.FindWindowByName('title').SetValue(config.title)
 			self.FindWindowByName('copyright').SetValue(config.copyright)
 			self.FindWindowByName('googlekey').SetValue(config.googlekey)
 			self.FindWindowByName('yahookey').SetValue(config.yahookey)
-		
+
 	def SaveStep(self, step):
 		if step == 1:
 			# Profile
@@ -191,7 +162,6 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 			config.nodata = self.FindWindowByName('nodatapanel').GetColor()
 			print config.nodata
 		elif step == 3:
-			#config.oldsrs = config.srs
 			config.srs = self.FindWindowByName('srs').GetValue().encode('ascii','ignore').strip()
 			config.srsformat = self.FindWindowByName('srs').GetSelection()
 			print config.srs
@@ -214,19 +184,14 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 			print config.tmaxz
 			print config.format
 		elif step == 5:
-			config.outputdir = self.FindWindowByName('outputdir').GetPath().encode('utf8')
+			config.outputdir = self.FindWindowByName('outputdir').GetValue()
 			config.url = self.FindWindowByName('url').GetValue()
 			if config.url == 'http://':
 				config.url = ''
-			print config.outputdir
-			print config.url
 		elif step == 6:
 			config.google = self.FindWindowByName('google').GetValue()
 			config.openlayers = self.FindWindowByName('openlayers').GetValue()
 			config.kml = self.FindWindowByName('kml').GetValue()
-			print config.google
-			print config.openlayers
-			print config.kml
 		elif step == 7:
 			config.title = self.FindWindowByName('title').GetValue().encode('utf8')
 			if not config.title:
@@ -238,11 +203,18 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 			print config.copyright
 			print config.googlekey
 			print config.yahookey
-	
+
+	def OnBrowseButtonPressed(self, evt):
+		# browse button has been pressed to select output directory
+		outputbox = self.FindWindowByName('outputdir')
+		currentdir = outputbox.GetValue()
+		dlg = wx.DirDialog(self, _("Choose output directory"), currentdir)
+		if dlg.ShowModal() == wx.ID_OK:
+			outputbox.SetValue(dlg.GetPath())
+
 	def UpdateRenderProgress(self, complete):
 		if self.step != len(steps) - 1:
 			print _("Nothing to update - progressbar not displayed")
-			return
 		else:
 			progressbar = self.FindWindowByName('progressbar')
 			progressbar.SetValue(complete)
@@ -250,7 +222,6 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 	def UpdateRenderText(self, text):
 		if self.step != len(steps) - 1:
 			print _("Nothing to update - progresstext not displayed")
-			return
 		else:
 			progresstext = self.FindWindowByName('progresstext')
 			progresstext.SetLabel(text)
@@ -266,7 +237,6 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 		self.FindWindowByName('throbber').ToggleOverlay(True) 
 
 step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
-	'''+_("MapSlicer generates tiles for fast online map publishing.")+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("What kind of tiles would you like to generate?")+'''</b></font>
 	<p>
@@ -277,7 +247,6 @@ step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
 	</wxp>
 	<blockquote>
 	'''+_("Mercator tiles compatible with Google, Yahoo or Bing maps and OpenStreetMap. Suitable for mashups and overlay with these popular interactive maps.")+'''
-	<a href="http://www.maptiler.org/google-maps-coordinate-system-projection-epsg-900913-3785/">'''+_("More info")+'''</a>.
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
 	    <param name="label" value="'''+_("Google Earth (KML SuperOverlay)")+'''">
@@ -287,12 +256,11 @@ step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
 	'''+_('Tiles and KML metadata for 3D vizualization in Google Earth desktop application or in the web browser plugin.')+''' 
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
-	    <param name="label" value="'''+_("WGS84 Plate Caree (Geodetic)")+'''">
+	    <param name="label" value="'''+_("WGS84 Plate Carree (Geodetic)")+'''">
 	    <param name="name" value="geodetic">
 	</wxp>
 	<blockquote>
 	'''+_('Compatible with most existing WMS servers, with the OpenLayers base map, Google Earth and other applications using WGS84 coordinates (<a href="http://www.spatialreference.org/ref/epsg/4326/">EPSG:4326</a>).')+'''
-	<a href="http://www.maptiler.org/google-maps-coordinate-system-projection-epsg-900913-3785/">'''+'''</a>.
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
 	    <param name="label" value="'''+_("Image Based Tiles (Raster)")+'''">
@@ -302,7 +270,7 @@ step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
 	'''+_("Tiles based on the dimensions of the picture in pixels (width and height). Stand-alone presentation even for images without georeference.")+'''
 	</blockquote>
 	</font>'''
-	
+
 step2 = '''<h3>'''+_("Source data files")+'''</h3>
 	'''+_("Please choose the raster files of the maps you would like to publish.")+'''
 	<p>
@@ -320,7 +288,7 @@ step2 = '''<h3>'''+_("Source data files")+'''</h3>
 	<param name="name" value="nodatapanel"></wxp>'''
 
 step3 = '''<h3>'''+_("Spatial reference system (SRS)")+'''</h3>
-	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in <a href="http://www.spatialreference.org">spatialreference.org</a>.')+'''
+	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files.')+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("What is the Spatial Reference System used in your files?")+'''</b></font>
 	<p>
@@ -330,7 +298,6 @@ step3 = '''<h3>'''+_("Spatial reference system (SRS)")+'''</h3>
 
 step4 = '''<h3>'''+_("Details about the tile pyramid")+'''</h3> <!-- Zoom levels, Tile Format (PNG/JPEG) & Addressing, PostProcessing -->
 	'''+_("In this step you should specify the details related to rendered tile pyramid.")+'''
-	'''+_("<!-- file format and convention for tile addressing (names of the tile files) which you would like to use. -->")+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("Zoom levels to generate:")+'''</b></font>
 	<p>
@@ -350,11 +317,11 @@ step4 = '''<h3>'''+_("Details about the tile pyramid")+'''</h3> <!-- Zoom levels
 	</wxp>
 	<p>
 	<font size="-1">
-	'''+_('Note: We recommend to <a href="http://blog.klokan.cz/2008/11/png-palette-with-variable-alpha-small.html">postprocess the produced PNG tiles with the PNGNQ utility</a>.')+'''
+	'''+_('Note: For PNG tiles, it may be advisable to use some kind of PNG compression tool on the produced tiles to optimise file sizes.')+'''
 	</font>
 	<!--
 	<p>
-	<font color="#DC5309" size="large"><b>Tile adressing:</b></font>
+	<font color="#DC5309" size="large"><b>Tile addressing:</b></font>
 	<p>
 	<font size="-1">
 	<wxp module="wx" class="RadioButton" name="test"><param name="name" value="raster"><param name="label" value="OSGeo TMS - Tile Map Service"></wxp>
@@ -387,7 +354,8 @@ step5 = '''<h3>'''+_("Destination folder and address")+'''</h3>
 <font color="#DC5309" size="large"><b>'''+_("Where to save the generated tiles?")+'''</b></font>
 <p>
 '''+_("Result directory:")+'''<br/>
-<wxp module="wx" class="DirPickerCtrl" name="outputdir" width="100%" height="30"><param name="name" value="outputdir"></wxp>
+<wxp module="wx" class="TextCtrl" name="outputdir" width="50%" height="30"><param name="name" value="outputdir"></wxp>
+<wxp module="wx" class="Button"><param name="name" value="browsebutton"><param name="label" value="'''+_("Browse...")+'''"></wxp>
 <p>
 <font color="#DC5309" size="large"><b>'''+_("The Internet address (URL) for publishing the map:")+'''</b></font>
 <p>
@@ -442,7 +410,7 @@ step7 = '''<h3>'''+_("Details for generating the viewers")+'''</h3>
 <font size="-1">
 '''+_('Note: You can get it <a href="http://developer.yahoo.com/wsregapp/">at this webpage</a>.')+'''
 </font>'''
-	
+
 step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
 '''+_("Now you can start the rendering of the map tiles. It can be a time consuming process especially for large datasets... so be patient please.")+'''
 <p>
@@ -464,9 +432,7 @@ step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
 </center>
 <font size="-1">
 <p>&nbsp;
-<br>'''+_("Thank you for using MapSlicer application.")+" "+_('This is an open-source project - you can help us to make it better.')+" "+_('Visit our <a href="http://github.com/kalxas/mapslicer">GitHub Project Page</a> to report bugs, contribute source code, help with documentation and tell us about the maps you are publishing!')+'''
-<p>
-'''+_('Thanks belongs to the open source MapTiler project for <a href="http://help.maptiler.org/credits/">their original contribution</a>!')
+<br>'''+_("Thank you for using MapSlicer application.")+"<br>"+_('This is an open-source project - you can help us to make it better.')
 
 # step9 - step8 with Resume button
 
@@ -488,8 +454,7 @@ stepfinal = '''<h3>'''+_("Your rendering task is finished!")+'''</h3>
 </ul>
 -->
 <p>&nbsp;
-<p>&nbsp;
-<p>
 '''
 
 steps = ['NULL',step1, step2, step3, step4, step5, step6, step7, step8 ]
+

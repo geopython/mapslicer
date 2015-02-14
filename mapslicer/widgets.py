@@ -1,6 +1,5 @@
 """Basic file selector page; published ItemSelected events."""
 # http://wxpython.org/docs/api/wx.ListCtrl-class.html
-# TODO: Cleaning the code, refactoring before 1.0 publishing
 
 import os
 
@@ -30,9 +29,6 @@ class FileDrop(wx.FileDropTarget):
 		for name in filenames:
 			try:
 				file = open(name, 'r')
-				#print name
-				#text = file.read()
-				#self.window.WriteText(text)
 				file.close()
 				self.target._add(name)
 			except IOError, error:
@@ -46,13 +42,12 @@ class FileDrop(wx.FileDropTarget):
 class FileListCtrl(wx.ListCtrl):
 	def __init__(self, parent, id=-1, size=wx.DefaultSize):
 		wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES|wx.LC_SINGLE_SEL|wx.SUNKEN_BORDER)
-		
+
 		self.InsertColumn(0, _("Filename"), width=350 )
 		self.InsertColumn(1, _("Georeference"), width=115)
-		
+
 		self.SetItemCount(len(config.files))
-		#self..Refresh(False)
-		
+
 		self.Bind(wx.EVT_SIZE, self.OnResize, self)
 
 	def OnGetItemText(self, item, col):
@@ -60,7 +55,6 @@ class FileListCtrl(wx.ListCtrl):
 
 	def OnResize(self, event):
 		"""Resize the filename column as the window is resized."""
-
 		self.SetColumnWidth(0, self.GetClientSizeTuple()[0] - self.GetColumnWidth(1))
 		event.Skip()
 
@@ -71,13 +65,10 @@ class FilePanel(wx.Panel):
 		self.SetBackgroundColour('#ffffff')
 
 		self.__items = []
-		#self.__items.append('Test')
 
 		mainsizer = wx.BoxSizer(wx.VERTICAL)
-		
+
 		self.lc = FileListCtrl(self)
-		#lc.SetWindowStyleFlag(wx.LC_REPORT|wx.LC_VIRTUAL|wx.LC_HRULES|wx.LC_VRULES|wx.LC_SINGLE_SEL) #|wx.LC_AUTOARRANGE) #|wx.SUNKEN_BORDER)
-		#lc.InsertColumn(0, _("Filename"), width=350 ) #wx.LIST_AUTOSIZE)
 		dt = FileDrop(self)
 		self.lc.SetDropTarget(dt)
 
@@ -89,7 +80,7 @@ class FilePanel(wx.Panel):
 		sizer = wx.FlexGridSizer(cols=5, hgap=5)
 		badd = wx.Button(self, wx.ID_ADD)
 		sizer.Add(badd)
-		
+
 		self.bdel = wx.Button(self, wx.ID_DELETE)
 		sizer.Add(self.bdel)
 		self.bdel.Disable()
@@ -104,7 +95,7 @@ class FilePanel(wx.Panel):
 		bgeo = wx.Button(self, -1, _("Georeference"))
 		sizer.Add(bgeo)
 		mainsizer.Add(sizer, 0, wx.EXPAND|wx.ALL, 3)
-		
+
 		self.SetSizer(mainsizer)
 		self.Bind(wx.EVT_BUTTON, self.onAdd, badd)
 		self.Bind(wx.EVT_BUTTON, self.onDelete, self.bdel)
@@ -112,7 +103,6 @@ class FilePanel(wx.Panel):
 
 	def OnItemSelected(self, event):
 		self.bdel.Enable()
-		#print 'OnItemSelected: "%s"' % event.m_itemIndex
 
 	def OnItemDeselected(self, event):
 		self.bdel.Disable()
@@ -120,8 +110,8 @@ class FilePanel(wx.Panel):
 	def _add(self, filename):
 
 		if len(config.files) > 0:
-			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapSlicer GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
-		
+			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapSlicer GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented"), wx.ICON_ERROR)
+
 		filename = filename.encode('utf8')
 
 		try:
@@ -144,27 +134,30 @@ class FilePanel(wx.Panel):
 			defaultDir=config.documentsdir,
 			defaultFile="",
 			wildcard=config.supportedfiles,
-			style=wx.OPEN #| wx.MULTIPLE # | wx.CHANGE_DIR
+			style=wx.FD_OPEN
 		)
 
-		# Show the dialog and retrieve the user response. If it is the OK response, 
+		# Show the dialog and retrieve the user response. If it is the OK response,
 		# process the data.
 		if dlg.ShowModal() == wx.ID_OK:
-			# This returns a Python list of files that were selected.
-			paths = dlg.GetPaths()
 
-			#print 'You selected %d files:' % len(paths)
+			path = dlg.GetPath()
+			print path, os.path.exists(path)
 
-			bad_paths = [path for path in paths	if not os.access(path, os.R_OK)]
-			if len(bad_paths) > 0:
-				wx.MessageBox(_("MapSlicer doesn't have permission to read the following files:\n\n") + "\n".join(bad_paths),
+			if not os.path.exists(path):
+				wx.MessageBox(_("MapSlicer can't find the following file:\n\n") + path,
+					_("File not found"), wx.ICON_ERROR)
+				return
+			if not os.access(path, os.R_OK):
+				wx.MessageBox(_("MapSlicer doesn't have permission to read the following file:\n\n") + path,
 					_("Bad permissions"), wx.ICON_ERROR)
-			else:
-				for path in paths:
-					#print '%s\n' % path
-					#files.append([filename,"None"])
-					#self.lc.SetItemCount(len(files))
-					self._add(path)
+				return
+
+			try:
+				self._add(path)
+			except gdalpreprocess.PreprocessError, e:
+				wx.MessageBox(str(e), _("Can't add a file"), wx.ICON_ERROR)
+				return
 
 	def onDelete(self, evt):
 		del config.files[ self.lc.GetFirstSelected() ]
@@ -172,8 +165,8 @@ class FilePanel(wx.Panel):
 		self.lc.Refresh()
 		if not len(config.files):
 			self.bdel.Disable()
-		
-	
+
+
 	def onGeoreference(self, evt):
 		bbox = None
 		dlg = wx.TextEntryDialog(
@@ -191,11 +184,11 @@ class FilePanel(wx.Panel):
 				bbox = map(float, str.split())
 			except:
 				return
-		
+
 			# Delete the old temporary files
 			if config.files[ self.lc.GetFirstSelected() ][2] != config.files[ self.lc.GetFirstSelected() ][0]:
 				os.unlink(config.files[ self.lc.GetFirstSelected() ][2])
-				
+
 			filename = config.files[ self.lc.GetFirstSelected() ][0]
 			from gdalpreprocess import singlefile
 			filerecord = singlefile(filename, bbox)
@@ -203,15 +196,15 @@ class FilePanel(wx.Panel):
 				config.files[self.lc.GetFirstSelected() ] = filerecord
 				self.lc.Refresh(False)
 				config.bboxgeoref = True
-			
+
 		dlg.Destroy()
-	
+
 	def onUp(self, evt):
 		pass
-	
+
 	def onDown(self, evt):
 		pass
-        
+
 
 class NodataPanel(wx.Panel):
 	def __init__(self, parent, id=-1, size=wx.DefaultSize, name = '' ):
@@ -221,7 +214,7 @@ class NodataPanel(wx.Panel):
 		sizer = wx.FlexGridSizer(cols=2, hgap=5)
 		self.ch1 = wx.CheckBox(self, -1, _("Set transparency for a color (NODATA):"))
 		sizer.Add(self.ch1)
-		
+
 		if config.nodata:
 			self.color = config.nodata
 			self.ch1.SetValue(True)
@@ -234,32 +227,31 @@ class NodataPanel(wx.Panel):
 		dc.SetBackground(wx.Brush(self.color))
 		dc.Clear()
 		del dc
-		
+
 		self.bcolor = wx.BitmapButton(self, -1, bmp)
 		sizer.Add(self.bcolor)
-		
+
 		self.SetSizer(sizer)
 		self.Bind(wx.EVT_BUTTON, self.onColor, self.bcolor)
-		
-		#self.bcolor.Enable(False)
-		
+
+
 	def onColor(self, evt):
 		color = wx.ColourData()
 		color.SetColour(self.color)
 		dlg = wx.ColourDialog(self, data=color)
 
-		# Ensure the full colour dialog is displayed, 
+		# Ensure the full colour dialog is displayed,
 		# not the abbreviated version.
 		dlg.GetColourData().SetChooseFull(True)
 
 		if dlg.ShowModal() == wx.ID_OK:
 
 			# If the user selected OK, then the dialog's wx.ColourData will
-			# contain valid information. Fetch the data ...
+			# contain valid information. Fetch the data.
 			data = dlg.GetColourData()
 
 			# ... then do something with it. The actual colour data will be
-			# returned as a three-tuple (r, g, b) in this particular case.
+			# returned as a three-tuple (r, g, b)
 			self.color = data.GetColour().Get()
 			#print 'You selected: %s\n' % str(self.color)
 
@@ -267,7 +259,7 @@ class NodataPanel(wx.Panel):
 			dc = wx.MemoryDC(bmp)
 			dc.SetBackground(wx.Brush(data.GetColour().Get()))
 			dc.Clear()
-						
+
 			self.bcolor.SetBitmapLabel(bmp)
 			self.ch1.SetValue(True)
 			config.nodata = self.color
@@ -275,13 +267,13 @@ class NodataPanel(wx.Panel):
 		# Once the dialog is destroyed, Mr. wx.ColourData is no longer your
 		# friend. Don't use it again!
 		dlg.Destroy()
-		
+
 	def GetColor(self):
 		if self.ch1.GetValue():
 			return self.color
 		else:
 			return None
-		
+
 class SpatialReferencePanel(wx.Panel):
 	def __init__(self, parent, id=-1, size=wx.DefaultSize, name = ''):
 		wx.Panel.__init__(self, parent, id, size=size, name=name)
@@ -306,7 +298,7 @@ class SpatialReferencePanel(wx.Panel):
 		link.SetBackgroundColour('#ffffff')
 		epsgsizer.Add(link, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 3)
 		self.sizer.Add(epsgsizer, 0, wx.EXPAND)
-		
+
 		# Search SpatialReference.org
 		searchsizer = wx.BoxSizer(wx.VERTICAL)
 		self.search = wx.SearchCtrl(self, style=wx.TE_PROCESS_ENTER)
@@ -315,7 +307,7 @@ class SpatialReferencePanel(wx.Panel):
 		searchsizer.Add(text, 0, wx.ALIGN_CENTER|wx.TOP, 3)
 		# 'Paste here WKT definition or URL of the spatial reference system, like:\n'
 		self.sizer.Add(searchsizer, 0, wx.EXPAND|wx.ALL, 3)
-		
+
 		# UTM - Universal Transverse Mercator
 		utmsizer = wx.BoxSizer(wx.HORIZONTAL)
 		text = wx.StaticText(self, -1, _('UTM Zone:'))
@@ -331,7 +323,7 @@ class SpatialReferencePanel(wx.Panel):
 		self.utmbutton = wx.Button(self, -1, _("Set"))
 		utmsizer.Add(self.utmbutton, 0, wx.EXPAND|wx.RIGHT|wx.LEFT, 3)
 		self.sizer.Add(utmsizer, 0, wx.EXPAND|wx.ALL, 3)
-		
+
 		self.tc1 = wx.TextCtrl(self, -1, config.srs, style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
 		self.sizer.Add(self.tc1, 1, wx.EXPAND|wx.ALL, 3)
 		self.bpreview = wx.Button(self, -1, _("Preview the map reference with this SRS"))
@@ -352,7 +344,7 @@ class SpatialReferencePanel(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.Preview, self.bpreview)
 		self.Bind(wx.EVT_CHOICE, self.Choice, self.ch1)
 		self.Bind(wx.EVT_TEXT_ENTER, self.Search, self.search)
-		self.Bind(wx.EVT_SEARCHCTRL_SEARCH_BTN, self.Search, self.search)		
+		self.Bind(wx.EVT_SEARCHCTRL_SEARCH_BTN, self.Search, self.search)
 
 	def Search(self, evt):
 		what = self.search.GetValue()
@@ -391,7 +383,7 @@ class SpatialReferencePanel(wx.Panel):
 			self.sizer.Show(2, recursive=True) # Search
 			self.sizer.Hide(3, recursive=True) # UTM
 			self.sizer.Layout()
-		
+
 	def Set(self, evt):
 		try:
 			from osgeo import osr
@@ -413,7 +405,7 @@ class SpatialReferencePanel(wx.Panel):
 				self.SetValue(source.ExportToPrettyWkt())
 		except Exception, error:
 			wx.MessageBox("%s" % error , _("The SRS definition is not correct"), wx.ICON_ERROR)
-		
+
 
 	def Preview(self, evt):
 		try:
@@ -432,20 +424,20 @@ class SpatialReferencePanel(wx.Panel):
 			urx, ury = trans.TransformPoint(T[0] + T[1]*xsize, T[3] + T[4]*xsize)[:2]
 			llx, lly = trans.TransformPoint(T[0] + T[2]*ysize, T[3] + T[5]*ysize)[:2]
 			lrx, lry = trans.TransformPoint(T[0] + T[1]*xsize + T[2]*ysize, T[3] + T[4]*xsize + T[5]*ysize )[:2]
-			webbrowser.open_new("http://www.mapslicer.org/preview/?points=%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f" % 
+			webbrowser.open_new("http://www.mapslicer.org/preview/?points=%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f" %
 				(uly, ulx, ury, urx, lry, lrx, lly, llx))
 		except Exception, error:
 			wx.MessageBox("%s" % error , _("The SRS definition is not correct"), wx.ICON_ERROR)
 
 	def SetValue(self, value):
 		self.tc1.SetValue(value)
-		
+
 	def GetValue(self):
 		return self.tc1.GetValue().encode('ascii','ignore')
-	
+
 	def SetSelection(self, value):
 		return self.ch1.SetSelection(value)
-		
+
 	def GetSelection(self):
 		return self.ch1.GetSelection()
 
@@ -453,3 +445,4 @@ class Throbber(wx.lib.throbber.Throbber):
 
 	def __init__(self, parent, id=-1, icon="", pos=wx.DefaultPosition, size=wx.DefaultSize, name=""):
 		wx.lib.throbber.Throbber.__init__(self, parent, id, icons.getThrobberBitmap(), pos, size, frames=12, frameWidth=16, overlay=icons.getWhite16Bitmap(), name=name)
+

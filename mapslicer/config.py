@@ -24,8 +24,6 @@ documentsdir = ""
 
 bboxgeoref = False
 
-DONATE_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=1806586"
-
 # TODO: GetText
 _ = lambda s: s
 
@@ -44,8 +42,8 @@ supportedfiles =  _("Supported raster files")+"|*.tif;*.tiff;*.kap;*.img;*.sid;*
 	_("NDF - NLAPS Data Format (.h1,.h2,.hd)")+"|*.h1;*.h2;*.hd|" + \
 	_("MFF - Vexcel MFF Raster (.hdr)")+"|*.hdr|" + \
 	_("INGR - Intergraph Raster Format (.cit,.rgb,..)")+"|*.cit;*.rgb|" + \
-	_("EIR -- Erdas Imagine Raw (.raw)")+"|*.raw|" + \
-	_("BLX -- Magellan BLX Topo File Format (.blx)")+"|*.blx|" + \
+	_("EIR - Erdas Imagine Raw (.raw)")+"|*.raw|" + \
+	_("BLX - Magellan BLX Topo File Format (.blx)")+"|*.blx|" + \
 	_("JPEG - Joint Photographic Experts Group JFIF (.jpg)")+"|*.jpg;*.jpeg|" + \
 	_("PNG - Portable Network Graphics (.png)")+"|*.png|" + \
 	_("GIF - Graphics Interchange Format (.gif)")+"|*.gif|" + \
@@ -97,9 +95,6 @@ _('SRSCustom9'),_("SRSDefinition9")
 # ...
 
 s = """
-#A = wx.PySimpleApp()
-#A.SetAppName(VENDOR_NAME)
-
 datadir = wx.StandardPaths.Get().GetUserLocalDataDir()
 if not os.path.isdir(datadir):
     os.mkdir(datadir)

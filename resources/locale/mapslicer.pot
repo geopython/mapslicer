@@ -1,21 +1,20 @@
-# Translations template for PROJECT.
-# Copyright (C) 2009 ORGANIZATION
-# This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# Translations template for MapSlicer
+# Copyright (C) 2009-2015
+# This file is distributed under the same license as the MapSlicer package.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2009-07-23 13:43+0200\n"
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-02-14 12:08+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.4\n"
 
 #: mapslicer/config.py:34
 msgid "Supported raster files"
@@ -62,11 +61,11 @@ msgid "INGR - Intergraph Raster Format (.cit,.rgb,..)"
 msgstr ""
 
 #: mapslicer/config.py:45
-msgid "EIR -- Erdas Imagine Raw (.raw)"
+msgid "EIR - Erdas Imagine Raw (.raw)"
 msgstr ""
 
 #: mapslicer/config.py:46
-msgid "BLX -- Magellan BLX Topo File Format (.blx)"
+msgid "BLX - Magellan BLX Topo File Format (.blx)"
 msgstr ""
 
 #: mapslicer/config.py:47
@@ -197,315 +196,573 @@ msgstr ""
 msgid "SRSDefinition9"
 msgstr ""
 
-#: mapslicer/main.py:51
-msgid "Insert &raster map files"
-msgstr ""
-
-#: mapslicer/main.py:55
-msgid "&Exit"
-msgstr ""
-
-#: mapslicer/main.py:57
-msgid "&File"
-msgstr ""
-
-#: mapslicer/main.py:60
-msgid "Online &Help && FAQ"
-msgstr ""
-
-#: mapslicer/main.py:62
-msgid "MapSlicer user &group"
-msgstr ""
-
-#: mapslicer/main.py:64
-msgid "Project &website"
-msgstr ""
-
-#: mapslicer/main.py:66
-msgid "&About"
-msgstr ""
-
-#: mapslicer/main.py:68
-msgid "&Help"
-msgstr ""
-
-#: mapslicer/main.py:82
+#: mapslicer/main.py:52
 msgid "Tile Profile"
 msgstr ""
 
-#: mapslicer/main.py:83
+#: mapslicer/main.py:53
 msgid "Source Data Files"
 msgstr ""
 
-#: mapslicer/main.py:84
+#: mapslicer/main.py:54
 msgid "Spatial Reference"
 msgstr ""
 
-#: mapslicer/main.py:85
+#: mapslicer/main.py:55
 msgid "Tile Details"
 msgstr ""
 
-#: mapslicer/main.py:86
+#: mapslicer/main.py:56
 msgid "Destination"
 msgstr ""
 
-#: mapslicer/main.py:87
+#: mapslicer/main.py:57
 msgid "Viewers"
 msgstr ""
 
-#: mapslicer/main.py:88
+#: mapslicer/main.py:58
 msgid "Viewer Details"
 msgstr ""
 
-#: mapslicer/main.py:89
+#: mapslicer/main.py:59
 msgid "Rendering"
 msgstr ""
 
-#: mapslicer/main.py:91 mapslicer/main.py:113
-msgid "MapSlicer - Map Tile Generator for Mashups"
+#: mapslicer/main.py:61 mapslicer/main.py:82
+msgid "MapSlicer - Tile Generator for Map Mashups"
 msgstr ""
 
-#: mapslicer/main.py:93
-msgid "http://www.mapslicer.org/"
+#: mapslicer/main.py:63
+#, python-format
+msgid "Version %s"
 msgstr ""
 
-#: mapslicer/main.py:94
-msgid "(C) 2008 - Klokan Petr Přidal"
+#: mapslicer/main.py:64
+msgid "https://wiki.osgeo.org/wiki/MapSlicer"
 msgstr ""
 
-#: mapslicer/main.py:96 mapslicer/main.py:235 mapslicer/main.py:242
-#: mapslicer/main.py:245 mapslicer/main.py:247
+#: mapslicer/main.py:66 mapslicer/main.py:154 mapslicer/main.py:161
+#: mapslicer/main.py:164 mapslicer/main.py:166
 msgid "Go &Back"
 msgstr ""
 
-#: mapslicer/main.py:98 mapslicer/main.py:234
+#: mapslicer/main.py:68 mapslicer/main.py:153
 msgid "&Continue"
 msgstr ""
 
-#: mapslicer/main.py:170
-msgid "MapSlicer"
-msgstr ""
-
-#: mapslicer/main.py:173
-msgid ""
-"MapSlicer is a powerful tool for online map publishing and generation of "
-"raster overlay mashups.\n"
-"Your geodata are transformed to the tiles compatible with Google Maps and"
-" Earth - ready for uploading to your webserver."
-msgstr ""
-
-#: mapslicer/main.py:184
-msgid "http://www.mapslicer.org"
-msgstr ""
-
-#: mapslicer/main.py:187
-msgid "http://groups.google.com/group/mapslicer"
-msgstr ""
-
-#: mapslicer/main.py:190
-msgid "http://help.mapslicer.org"
-msgstr ""
-
-#: mapslicer/main.py:194 mapslicer/widgets.py:137
-msgid "Choose a file"
-msgstr ""
-
-#: mapslicer/main.py:214
-msgid "This would be an preferences Dialog\n"
-msgstr ""
-
-#: mapslicer/main.py:215
-msgid "If there were any preferences to set.\n"
-msgstr ""
-
-#: mapslicer/main.py:216
-msgid "Preferences"
-msgstr ""
-
-#: mapslicer/main.py:238 mapslicer/main.py:244
+#: mapslicer/main.py:157 mapslicer/main.py:163
 msgid "&Render"
 msgstr ""
 
-#: mapslicer/main.py:239
+#: mapslicer/main.py:158
 msgid "&Stop"
 msgstr ""
 
-#: mapslicer/main.py:241
+#: mapslicer/main.py:160
 msgid "&Resume"
 msgstr ""
 
-#: mapslicer/main.py:248
+#: mapslicer/main.py:167
 msgid "Exit"
 msgstr ""
 
-#: mapslicer/main.py:279
+#: mapslicer/main.py:195
 msgid "You have to add some files for rendering"
 msgstr ""
 
-#: mapslicer/main.py:279
+#: mapslicer/main.py:195
 msgid "No files specified"
 msgstr ""
 
-#: mapslicer/main.py:282
+#: mapslicer/main.py:198
 msgid ""
-"Sorry the file you have specified does not have georeference.\n"
+"The file you have specified does not have any georeference.\n"
 "\n"
 "Click on the 'Georeference' button and give a bounding box or \n"
 "create a world file (.wld) for the specified file."
 msgstr ""
 
-#: mapslicer/main.py:282
+#: mapslicer/main.py:198
 msgid "Missing georeference"
 msgstr ""
 
-#: mapslicer/main.py:294 mapslicer/widgets.py:398 mapslicer/widgets.py:421
-msgid "The SRS definition is not correct"
-msgstr ""
-
-#: mapslicer/main.py:298
+#: mapslicer/main.py:206
 msgid ""
 "You have to specify reference system of your coordinates.\n"
 "\n"
 "TIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'"
 msgstr ""
 
-#: mapslicer/main.py:298
+#: mapslicer/main.py:206
 msgid "Not valid spatial reference system"
 msgstr ""
 
-#: mapslicer/main.py:315 mapslicer/widgets.py:120
-msgid ""
-"Unfortunately the merging of files is not yet implemented in the MapSlicer"
-" GUI. Only the first file in the list is going to be rendered."
+#: mapslicer/main.py:216
+#, python-format
+msgid "The selected output directory '%s' is not writeable."
 msgstr ""
 
-#: mapslicer/main.py:315 mapslicer/widgets.py:120
+#: mapslicer/main.py:217 mapslicer/main.py:225 mapslicer/widgets.py:153
+msgid "Bad permissions"
+msgstr ""
+
+#: mapslicer/main.py:223
+#, python-format
+msgid ""
+"The selected output directory '%s' can't be created, because its "
+"superdirectory '%s' is not writeable."
+msgstr ""
+
+#: mapslicer/main.py:246 mapslicer/widgets.py:113
+msgid ""
+"Unfortunately the merging of files is not yet implemented in the MapSlicer "
+"GUI. Only the first file in the list is going to be rendered."
+msgstr ""
+
+#: mapslicer/main.py:246
 msgid "Not yet implemented :-("
 msgstr ""
 
-#: mapslicer/main.py:329
+#: mapslicer/main.py:258
 msgid "Rendering stopped !!!!"
 msgstr ""
 
-#: mapslicer/main.py:334
+#: mapslicer/main.py:264
 msgid "Started..."
 msgstr ""
 
-#: mapslicer/main.py:397
+#: mapslicer/main.py:333
 msgid "Opening the input files"
 msgstr ""
 
-#: mapslicer/main.py:402
+#: mapslicer/main.py:338
 msgid "Generating viewers and metadata"
 msgstr ""
 
-#: mapslicer/main.py:407
+#: mapslicer/main.py:343
 msgid "Rendering the base tiles"
 msgstr ""
 
-#: mapslicer/main.py:412
+#: mapslicer/main.py:348
 msgid "Rendering the overview tiles in the pyramid"
 msgstr ""
 
-#: mapslicer/main.py:426
-msgid "Task is finished!"
+#: mapslicer/main.py:353
+msgid "Generating KML"
 msgstr ""
 
-#: mapslicer/widgets.py:36
+#: mapslicer/main.py:369
+msgid "Rendering error!"
+msgstr ""
+
+#: mapslicer/widgets.py:35
 msgid "Error opening file\n"
 msgstr ""
 
-#: mapslicer/widgets.py:39
+#: mapslicer/widgets.py:38
 msgid "Cannot open non ascii files\n"
 msgstr ""
 
-#: mapslicer/widgets.py:47
+#: mapslicer/widgets.py:46
 msgid "Filename"
 msgstr ""
 
-#: mapslicer/widgets.py:48 mapslicer/widgets.py:101
+#: mapslicer/widgets.py:47 mapslicer/widgets.py:95
 msgid "Georeference"
 msgstr ""
 
-#: mapslicer/widgets.py:169
-#, python-format
-msgid ""
-"Please specify bounding box for '%s' as 4 numbers\n"
-"Format: 'north south east west'\n"
-"\n"
-"Alternatively you can create a world file (.wld) or (.tab) by an external"
-" GIS software"
+#: mapslicer/widgets.py:113
+msgid "Not yet implemented"
 msgstr ""
 
-#: mapslicer/widgets.py:170
+#: mapslicer/widgets.py:129 mapslicer/widgets.py:159
+msgid "Can't add a file"
+msgstr ""
+
+#: mapslicer/widgets.py:133
+msgid "Choose a file"
+msgstr ""
+
+#: mapslicer/widgets.py:148
+msgid ""
+"MapSlicer can't find the following file:\n"
+"\n"
+msgstr ""
+
+#: mapslicer/widgets.py:149
+msgid "File not found"
+msgstr ""
+
+#: mapslicer/widgets.py:152
+msgid ""
+"MapSlicer doesn't have permission to read the following file:\n"
+"\n"
+msgstr ""
+
+#: mapslicer/widgets.py:173
+msgid ""
+"Please specify bounding box as 4 numbers or a world file as 6 numbers\n"
+"Format: 'north south east west'\n"
+"\n"
+"Alternatively you can create a world file (.wld) or (.tab) by an external "
+"GIS software"
+msgstr ""
+
+#: mapslicer/widgets.py:174
 msgid "Georeference with bounding box"
 msgstr ""
 
-#: mapslicer/widgets.py:210
+#: mapslicer/widgets.py:215
 msgid "Set transparency for a color (NODATA):"
 msgstr ""
 
-#: mapslicer/widgets.py:288
+#: mapslicer/widgets.py:297
 msgid "EPSG Registry"
 msgstr ""
 
-#: mapslicer/widgets.py:297
+#: mapslicer/widgets.py:306
 msgid "Paste here the \"OGC WKT\" or \"Proj4\" definition or the URL:"
 msgstr ""
 
-#: mapslicer/widgets.py:304
+#: mapslicer/widgets.py:313
 msgid "UTM Zone:"
 msgstr ""
 
-#: mapslicer/widgets.py:314
+#: mapslicer/widgets.py:323
 msgid "Set"
 msgstr ""
 
-#: mapslicer/widgets.py:320
+#: mapslicer/widgets.py:329
 msgid "Preview the map reference with this SRS"
 msgstr ""
 
-#: mapslicer/widgets.py:387
+#: mapslicer/widgets.py:396
 #, python-format
 msgid "%s / UTM Zone %s%s"
 msgstr ""
 
-#: mapslicer/widgets.py:449
-msgid "Click on the 'Render' button to start the rendering..."
+#: mapslicer/widgets.py:407 mapslicer/widgets.py:430
+msgid "The SRS definition is not correct"
 msgstr ""
 
-#: mapslicer/wizard.py:59
-msgid "GDAL2Tiles initialization failed"
+#: mapslicer/wizard.py:71 mapslicer/wizard.py:79 mapslicer/wizard.py:316
+msgid "PNG - with transparency"
 msgstr ""
 
-#: mapslicer/wizard.py:155
+#: mapslicer/wizard.py:72 mapslicer/wizard.py:80 mapslicer/wizard.py:316
+msgid "JPEG - smaller but without transparency"
+msgstr ""
+
+#: mapslicer/wizard.py:73 mapslicer/wizard.py:81 mapslicer/wizard.py:316
+msgid "Hybrid JPEG+PNG - only for Google Earth"
+msgstr ""
+
+#: mapslicer/wizard.py:74
+msgid "Garmin Custom maps KMZ - 256 pixels"
+msgstr ""
+
+#: mapslicer/wizard.py:75
+msgid "Garmin Custom maps KMZ - 512 pixels"
+msgstr ""
+
+#: mapslicer/wizard.py:76
+msgid "Garmin Custom maps KMZ - 1024 pixels"
+msgstr ""
+
+#: mapslicer/wizard.py:211
+msgid "Choose output directory"
+msgstr ""
+
+#: mapslicer/wizard.py:217
 msgid "Nothing to update - progressbar not displayed"
 msgstr ""
 
-#: mapslicer/wizard.py:163
+#: mapslicer/wizard.py:224
 msgid "Nothing to update - progresstext not displayed"
 msgstr ""
 
-#: mapslicer/wizard.py:171
+#: mapslicer/wizard.py:239
 msgid "Selection of the tile profile"
 msgstr ""
 
-#: mapslicer/wizard.py:172
-msgid ""
-"MapSlicer generates tiles for simple online publishing of maps. It offers "
-"several tile profiles - several approaches how to cut a map into small "
-"tiles."
-msgstr ""
-
-#: mapslicer/wizard.py:174
+#: mapslicer/wizard.py:241
 msgid "What kind of tiles would you like to generate?"
 msgstr ""
 
-#: mapslicer/wizard.py:178
-msgid "Global Spherical Mercator (tiles a la Google Maps)"
+#: mapslicer/wizard.py:245
+msgid "Google Maps compatible (Spherical Mercator)"
 msgstr ""
 
-#: mapslicer/wxgdal2tiles.py:25
-msgid "Rendering Error"
+#: mapslicer/wizard.py:249
+msgid ""
+"Mercator tiles compatible with Google, Yahoo or Bing maps and OpenStreetMap. "
+"Suitable for mashups and overlay with these popular interactive maps."
 msgstr ""
 
+#: mapslicer/wizard.py:252
+msgid "Google Earth (KML SuperOverlay)"
+msgstr ""
+
+#: mapslicer/wizard.py:256
+msgid ""
+"Tiles and KML metadata for 3D vizualization in Google Earth desktop "
+"application or in the web browser plugin."
+msgstr ""
+
+#: mapslicer/wizard.py:259
+msgid "WGS84 Plate Carree (Geodetic)"
+msgstr ""
+
+#: mapslicer/wizard.py:263
+msgid ""
+"Compatible with most existing WMS servers, with the OpenLayers base map, "
+"Google Earth and other applications using WGS84 coordinates (<a href="
+"\"http://www.spatialreference.org/ref/epsg/4326/\">EPSG:4326</a>)."
+msgstr ""
+
+#: mapslicer/wizard.py:266
+msgid "Image Based Tiles (Raster)"
+msgstr ""
+
+#: mapslicer/wizard.py:270
+msgid ""
+"Tiles based on the dimensions of the picture in pixels (width and height). "
+"Stand-alone presentation even for images without georeference."
+msgstr ""
+
+#: mapslicer/wizard.py:274
+msgid "Source data files"
+msgstr ""
+
+#: mapslicer/wizard.py:275
+msgid "Please choose the raster files of the maps you would like to publish."
+msgstr ""
+
+#: mapslicer/wizard.py:277
+msgid "Input raster map files:"
+msgstr ""
+
+#: mapslicer/wizard.py:290
+msgid "Spatial reference system (SRS)"
+msgstr ""
+
+#: mapslicer/wizard.py:291
+msgid ""
+"It is necessary to know which coordinate system (Spatial Reference System) "
+"is used for georeferencing of the input files."
+msgstr ""
+
+#: mapslicer/wizard.py:293
+msgid "What is the Spatial Reference System used in your files?"
+msgstr ""
+
+#: mapslicer/wizard.py:299
+msgid "Details about the tile pyramid"
+msgstr ""
+
+#: mapslicer/wizard.py:300
+msgid ""
+"In this step you should specify the details related to rendered tile pyramid."
+msgstr ""
+
+#: mapslicer/wizard.py:302
+msgid "Zoom levels to generate:"
+msgstr ""
+
+#: mapslicer/wizard.py:304
+msgid "Minimum zoom:"
+msgstr ""
+
+#: mapslicer/wizard.py:305
+msgid "Maximum zoom:"
+msgstr ""
+
+#: mapslicer/wizard.py:308
+msgid ""
+"Note: The selected zoom levels are calculated from your input data and "
+"should be OK in most cases."
+msgstr ""
+
+#: mapslicer/wizard.py:311
+msgid "Please choose a file format"
+msgstr ""
+
+#: mapslicer/wizard.py:320
+msgid ""
+"Note: For PNG tiles, it may be advisable to use some kind of PNG compression "
+"tool on the produced tiles to optimise file sizes."
+msgstr ""
+
+#: mapslicer/wizard.py:351
+msgid "Destination folder and address"
+msgstr ""
+
+#: mapslicer/wizard.py:352
+msgid ""
+"Please select a directory where the generated tiles should be saved. "
+"Similarly you can specify the Internet address where will you publish the "
+"map."
+msgstr ""
+
+#: mapslicer/wizard.py:354
+msgid "Where to save the generated tiles?"
+msgstr ""
+
+#: mapslicer/wizard.py:356
+msgid "Result directory:"
+msgstr ""
+
+#: mapslicer/wizard.py:358
+msgid "Browse..."
+msgstr ""
+
+#: mapslicer/wizard.py:360
+msgid "The Internet address (URL) for publishing the map:"
+msgstr ""
+
+#: mapslicer/wizard.py:362
+msgid "Destination URL:"
+msgstr ""
+
+#: mapslicer/wizard.py:366
+msgid ""
+"Note: You should specify the URL if you need to generate the correct KML for "
+"Google Earth."
+msgstr ""
+
+#: mapslicer/wizard.py:369
+msgid "Selection of the viewers"
+msgstr ""
+
+#: mapslicer/wizard.py:370
+msgid ""
+"MapSlicer can also generate simple web viewers for presenting the tiles as a "
+"map overlay. You can use these viewers as a base for your mashups. Similarly "
+"it is possible to generate KML files for Google Earth."
+msgstr ""
+
+#: mapslicer/wizard.py:372
+msgid "What viewers should be generated?"
+msgstr ""
+
+#: mapslicer/wizard.py:375
+msgid "Google Maps"
+msgstr ""
+
+#: mapslicer/wizard.py:377
+msgid ""
+"Overlay presentation of your maps on top of standard Google Maps layers. If "
+"KML is generated then the Google Earth Plugin is used as well."
+msgstr ""
+
+#: mapslicer/wizard.py:379
+msgid "OpenLayers"
+msgstr ""
+
+#: mapslicer/wizard.py:381
+msgid ""
+"Overlay of Google Maps, Virtual Earth, Yahoo Maps, OpenStreetMap and "
+"OpenAerialMap, WMS and WFS layers and another sources available in the open-"
+"source project <a href=\"http://www.openlayers.org/\">OpenLayers</a>."
+msgstr ""
+
+#: mapslicer/wizard.py:385
+msgid ""
+"If this option is selected then metadata for Google Earth is generated for "
+"the tile tree. It means you can display the tiles as an overlay of the "
+"virtual 3D world of the Google Earth desktop application or browser plug-in."
+msgstr ""
+
+#: mapslicer/wizard.py:389
+msgid "Details for generating the viewers"
+msgstr ""
+
+#: mapslicer/wizard.py:390
+msgid "Please add information related to the selected viewers."
+msgstr ""
+
+#: mapslicer/wizard.py:392
+msgid "Info about the map"
+msgstr ""
+
+#: mapslicer/wizard.py:394
+msgid "Title of the map:"
+msgstr ""
+
+#: mapslicer/wizard.py:397
+msgid "Copyright notice (optional):"
+msgstr ""
+
+#: mapslicer/wizard.py:400
+msgid "The API keys for online maps API viewers"
+msgstr ""
+
+#: mapslicer/wizard.py:402
+msgid "Google Maps API key (optional):"
+msgstr ""
+
+#: mapslicer/wizard.py:405
+msgid ""
+"Note: You can get it <a href=\"http://code.google.com/apis/maps/signup.html"
+"\">online at this address</a>."
+msgstr ""
+
+#: mapslicer/wizard.py:408
+msgid "Yahoo Application ID key (optional):"
+msgstr ""
+
+#: mapslicer/wizard.py:411
+msgid ""
+"Note: You can get it <a href=\"http://developer.yahoo.com/wsregapp/\">at "
+"this webpage</a>."
+msgstr ""
+
+#: mapslicer/wizard.py:414
+msgid "Tile rendering"
+msgstr ""
+
+#: mapslicer/wizard.py:415
+msgid ""
+"Now you can start the rendering of the map tiles. It can be a time consuming "
+"process especially for large datasets... so be patient please."
+msgstr ""
+
+#: mapslicer/wizard.py:417
+msgid "Rendering progress:"
+msgstr ""
+
+#: mapslicer/wizard.py:426
+msgid "Click on the 'Render' button to start the rendering..."
+msgstr ""
+
+#: mapslicer/wizard.py:435
+msgid "Thank you for using MapSlicer application."
+msgstr ""
+
+#: mapslicer/wizard.py:435
+msgid "This is an open-source project - you can help us to make it better."
+msgstr ""
+
+#: mapslicer/wizard.py:440
+msgid "Your rendering task is finished!"
+msgstr ""
+
+#: mapslicer/wizard.py:441
+msgid ""
+"Thank you for using this software. Now you can see the results. If you "
+"upload the directory with tiles to the Internet your map is published!"
+msgstr ""
+
+#: mapslicer/wizard.py:443
+msgid "Available results:"
+msgstr ""
+
+#: mapslicer/wizard.py:445
+msgid ""
+"The generated tiles and also the viewers are available in the output "
+"directory:"
+msgstr ""
+
+#: mapslicer/wizard.py:448
+msgid "(click to open)"
+msgstr ""
