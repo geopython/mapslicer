@@ -1,7 +1,7 @@
 ====================
 MapSlicer Application
 ====================
-https://github.com/kalxas/mapslicer
+https://wiki.osgeo.org/wiki/MapSlicer
 
 MapSlicer is graphical application for online map publishing. Your map can create overlay of standard maps like Google Maps, Yahoo Maps, Microsoft VirtualEarth or OpenStreetMap and can be also visualized in 3D by Google Earth. Only thing you have to do for publishing the map is to upload the automatically generated directory with tiles into your webserver.
 

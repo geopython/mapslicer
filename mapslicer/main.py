@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# TODO: Cleaning the code, refactoring before 1.0 publishing
 
 import os, sys
 import webbrowser
@@ -32,7 +31,6 @@ class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		
 		#spath = wx.StandardPaths.Get()
-		#config.documentsdir = spath.GetDocumentsDir()
 		config.documentsdir = os.path.expanduser('~')
 
 		self.abortEvent = delayedresult.AbortEvent()
@@ -83,7 +81,7 @@ class MainFrame(wx.Frame):
 		#self.Bind(wx.EVT_RADIOBUTTON, self.OnRadio)
 		
 		# Menu Bar end
-		self.bitmap_1 = wx.StaticBitmap(self, -1, icons.getIcon140Bitmap()) # wx.Bitmap("../resources/icon140.png", wx.BITMAP_TYPE_ANY))
+		self.bitmap_1 = wx.StaticBitmap(self, -1, icons.getIcon140Bitmap())
 		self.steplabel = []
 		self.steplabel.append(wx.StaticText(self, -1, _("Tile Profile")))
 		self.steplabel.append(wx.StaticText(self, -1, _("Source Data Files")))
@@ -96,7 +94,7 @@ class MainFrame(wx.Frame):
 		
 		self.label_10 = wx.StaticText(self, -1, _("MapSlicer - Tile Generator for Map Mashups"))
 		
-		self.label_8 = wx.StaticText(self, -1, _("https://github.com/kalxas/mapslicer"))
+		self.label_8 = wx.StaticText(self, -1, _("https://wiki.osgeo.org/wiki/MapSlicer"))
 		self.label_9 = wx.StaticText(self, -1, _(u"(C) 2009 - Klokan Petr Přidal"))
 
 		self.button_back = wx.Button(self, -1, _("Go &Back"))
@@ -109,7 +107,7 @@ class MainFrame(wx.Frame):
 		self.html.SetBorders(0)
 		self.html.SetMinSize((500, 385))
 
-		# Set the first step of the wizard..
+		# Set the first step of the wizard
 		self.SetStep(1)
 
 		self.__set_properties()
@@ -310,7 +308,7 @@ input files. You have not selected any yet."""), _("No input files selected"), w
 				wx.MessageBox(_("""You have to add some files for rendering"""), _("No files specified"), wx.ICON_ERROR)
 				return
 			if config.files[0][1] == '' and config.profile != 'raster':
-				wx.MessageBox(_("""Sorry the file you have specified does not have georeference.\n\nClick on the 'Georeference' button and give a bounding box or \ncreate a world file (.wld) for the specified file."""), _("Missing georeference"), wx.ICON_ERROR)
+				wx.MessageBox(_("""The file you have specified does not have any georeference.\n\nClick on the 'Georeference' button and give a bounding box or \ncreate a world file (.wld) for the specified file."""), _("Missing georeference"), wx.ICON_ERROR)
 				return
 		if step == 3:
 			self.html.SaveStep(3)

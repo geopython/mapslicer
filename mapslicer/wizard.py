@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# TODO: Cleaning the code, refactoring before 1.0 publishing
 
 import os
 import sys
@@ -27,7 +26,6 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 		# add the donate image to the MemoryFileSystem:
         mfs = wx.MemoryFSHandler()
         wx.FileSystem_AddHandler(mfs)
-        mfs.AddFile("donatebtn.png", icons.getDonateBtnData(), wx.BITMAP_TYPE_PNG)
 
 	def OnLinkClicked(self, linkinfo):
 		webbrowser.open_new(linkinfo.GetHref())
@@ -122,10 +120,6 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 
 							# I hate it when I have to do this.
 							wx.MessageBox(_("""\
-We are terribly sorry for this error. It is a known issue stemming from the fact that we try hard to \
-support all major software platforms -- Microsoft Windos, Mac OS X and UNIX systems. Unfortunately \
-they don't have all the same capabilities.
-
 You are processing file '%s' for which we can't provide default output directory, because both our \
 options -- input file directory '%s' and your current working directory '%s' -- are not writeable. \
 Please select the output directory on your own.""") % (filename, input_dir, os.getcwd()),
@@ -266,7 +260,6 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 		self.FindWindowByName('throbber').ToggleOverlay(True) 
 
 step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
-	'''+_("MapSlicer generates tiles for fast online map publishing.")+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("What kind of tiles would you like to generate?")+'''</b></font>
 	<p>
@@ -277,7 +270,6 @@ step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
 	</wxp>
 	<blockquote>
 	'''+_("Mercator tiles compatible with Google, Yahoo or Bing maps and OpenStreetMap. Suitable for mashups and overlay with these popular interactive maps.")+'''
-	<a href="http://www.maptiler.org/google-maps-coordinate-system-projection-epsg-900913-3785/">'''+_("More info")+'''</a>.
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
 	    <param name="label" value="'''+_("Google Earth (KML SuperOverlay)")+'''">
@@ -287,12 +279,11 @@ step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
 	'''+_('Tiles and KML metadata for 3D vizualization in Google Earth desktop application or in the web browser plugin.')+''' 
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
-	    <param name="label" value="'''+_("WGS84 Plate Caree (Geodetic)")+'''">
+	    <param name="label" value="'''+_("WGS84 Plate Carree (Geodetic)")+'''">
 	    <param name="name" value="geodetic">
 	</wxp>
 	<blockquote>
 	'''+_('Compatible with most existing WMS servers, with the OpenLayers base map, Google Earth and other applications using WGS84 coordinates (<a href="http://www.spatialreference.org/ref/epsg/4326/">EPSG:4326</a>).')+'''
-	<a href="http://www.maptiler.org/google-maps-coordinate-system-projection-epsg-900913-3785/">'''+'''</a>.
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
 	    <param name="label" value="'''+_("Image Based Tiles (Raster)")+'''">
@@ -320,7 +311,7 @@ step2 = '''<h3>'''+_("Source data files")+'''</h3>
 	<param name="name" value="nodatapanel"></wxp>'''
 
 step3 = '''<h3>'''+_("Spatial reference system (SRS)")+'''</h3>
-	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in the <a href="http://help.mapslicer.org/coordinates/">MapSlicer help</a>.')+'''
+	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files.')+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("What is the Spatial Reference System used in your files?")+'''</b></font>
 	<p>
@@ -350,11 +341,11 @@ step4 = '''<h3>'''+_("Details about the tile pyramid")+'''</h3> <!-- Zoom levels
 	</wxp>
 	<p>
 	<font size="-1">
-	'''+_('Note: We recommend to <a href="http://blog.klokan.cz/2008/11/png-palette-with-variable-alpha-small.html">postprocess the produced PNG tiles with the PNGNQ utility</a>.')+'''
+	'''+_('Note: For PNG tiles, it may be advisable to use some kind of PNG compression tool on the produced tiles to optimise file sizes.')+'''
 	</font>
 	<!--
 	<p>
-	<font color="#DC5309" size="large"><b>Tile adressing:</b></font>
+	<font color="#DC5309" size="large"><b>Tile addressing:</b></font>
 	<p>
 	<font size="-1">
 	<wxp module="wx" class="RadioButton" name="test"><param name="name" value="raster"><param name="label" value="OSGeo TMS - Tile Map Service"></wxp>
@@ -464,11 +455,7 @@ step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
 </center>
 <font size="-1">
 <p>&nbsp;
-<br>'''+_("Thank you for using MapSlicer application.")+" "+_('This is an open-source project - you can help us to make it better.')+" "+_('Join the <a href="http://groups.google.com/group/mapslicer">MapSlicer User Group</a> to speak with other MapSlicer users and tell us about the maps you are publishing!')+" "+_('You can also <a href="http://mapslicer.uservoice.com/">suggest improvements</a> or <a href="http://code.google.com/p/mapslicer/issues/list">report bugs</a>.')+'''
-<p>
-'''+_("Please consider")+' <b><a href="'+config.DONATE_URL+'">'+_("donation via PayPal or Credit Card.")+ "</a></b> "+_("We welcome contribution to the source code, help with documentation, localization or with user support.")+" "+_('Thanks belongs to <a href="http://help.mapslicer.org/credits/">those who have already helped</a>!')+'''
-<p>
-'''+_('Authors of this utility provide <b><a href="http://www.mapslicer.com/">commercial support</a></b> related to the map tile rendering, geodata processing and customization of open-source GIS tools. We have developed also a <b><a href="http://www.mapslicer.com/">fast parallelized utility</a></b> for efficient tile rendering on Multi-Core processors and on clusters like Amazon EC2.</font>')
+<br>'''+_("Thank you for using MapSlicer application.")+" "+_('This is an open-source project - you can help us to make it better.')
 
 # step9 - step8 with Resume button
 
@@ -490,15 +477,7 @@ stepfinal = '''<h3>'''+_("Your rendering task is finished!")+'''</h3>
 </ul>
 -->
 <p>&nbsp;
-<p>&nbsp;
-<p>
-<center>
-<a href="'''+config.DONATE_URL+'''"><img src="memory:donatebtn.png"></a>
-<p>
-'''+_("Please support development and maintenance of this project.")+'''
-'''+_("Even a small amount helps!")+'''
-'''+_("You can use PayPal or credit cards like VISA, MasterCard, American Express.")+'''
-</center>
 '''
 
 steps = ['NULL',step1, step2, step3, step4, step5, step6, step7, step8 ]
+
