@@ -103,7 +103,7 @@ s = """
 datadir = wx.StandardPaths.Get().GetUserLocalDataDir()
 if not os.path.isdir(datadir):
     os.mkdir(datadir)
-f = wx.FileConfig(localFilename=os.path.join(datadir,'MapTiler.cfg'))
+f = wx.FileConfig(localFilename=os.path.join(datadir,'MapSlicer.cfg'))
 
 f.SetPath("APath")
 print f.Read("Key")

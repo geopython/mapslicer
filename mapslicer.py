@@ -6,7 +6,7 @@ import os, sys
 
 # Where is the executable file on the disk?
 exepath = os.getcwd()
-if hasattr(sys, "frozen") or sys.executable.find('MapTiler.app') != -1:
+if hasattr(sys, "frozen") or sys.executable.find('MapSlicer.app') != -1:
 	exepath = os.path.dirname(sys.executable)
 
 # Windows: set the GDAL and PROJ variables ..
@@ -27,7 +27,7 @@ if sys.platform in ['win32','win64']:
 
 # Mac: GDAL.framework is in the application bundle or in the /Library/Frameworks
 if sys.platform == 'darwin' and not os.environ.has_key('GDAL_DATA'):
-	frameworkpath = exepath[:(exepath.find('MapTiler.app')+12)]+'/Contents/Frameworks'
+	frameworkpath = exepath[:(exepath.find('MapSlicer.app')+12)]+'/Contents/Frameworks'
 	if not os.path.exists( os.path.join(frameworkpath, "GDAL.framework" )):
 		frameworkpath = "/Library/Frameworks"
 	os.environ['PROJ_LIB'] = os.path.join( frameworkpath, "PROJ.framework/Resources/proj/" )
@@ -39,19 +39,19 @@ if sys.platform == 'darwin' and not os.environ.has_key('GDAL_DATA'):
 
 import traceback
 import wx
-import maptiler
+import mapslicer
 
-from maptiler.bug_report import do_bug_report_dialog
+from mapslicer.bug_report import do_bug_report_dialog
 
-__version__ = maptiler.version
+__version__ = mapslicer.version
 
-class MapTilerApp(wx.App):
+class MapSlicerApp(wx.App):
 	
 	def OnInit(self):
 		wx.InitAllImageHandlers()
-		self.main_frame = maptiler.MainFrame(None, -1, "")
+		self.main_frame = mapslicer.MainFrame(None, -1, "")
 		self.SetTopWindow(self.main_frame)
-		self.SetAppName("MapTiler")
+		self.SetAppName("MapSlicer")
 		return True
 		
 	def MacOpenFile(self, filename):
@@ -79,14 +79,14 @@ if __name__ == "__main__":
 	
 	# TODO: GetText
 	#import gettext
-	#gettext.install("maptiler")
+	#gettext.install("mapslicer")
 	_ = lambda s: s
 
 	# TODO: Parse command line arguments:
 	# for both batch processing and initialization of the GUI
 
 	#wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic",0)
-	app = MapTilerApp(False)
+	app = MapSlicerApp(False)
 
 	#spath = wx.StandardPaths.Get()
 	#print spath.GetExecutablePath()
@@ -105,7 +105,7 @@ http://www.kyngchaos.com/software:frameworks"""), _("Error: GDAL Framework not f
 		elif sys.platform in ['win32','win64']:
 			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n
 If you used the installer then please report this problem as an issue at:
-http://code.google.com/p/maptiler/issues"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
+https://github.com/kalxas/maptiler/issues"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
 			sys.exit(1)
 		elif sys.platform.startswith('linux'):
 			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n

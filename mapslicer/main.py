@@ -63,7 +63,7 @@ class MainFrame(wx.Frame):
 		menu = wx.Menu()
 		item = menu.Append(wx.ID_HELP, _("Online &Help && FAQ"))
 		self.Bind(wx.EVT_MENU, self.OnHelp, item)
-		item = menu.Append(wx.NewId(), _("MapTiler User &Group"))
+		item = menu.Append(wx.NewId(), _("MapSlicer User &Group"))
 		self.Bind(wx.EVT_MENU, self.OnGroupWeb, item)
 		item = menu.Append(wx.NewId(), _("Donation"))
 		self.Bind(wx.EVT_MENU, self.OnDonate, item)
@@ -94,9 +94,9 @@ class MainFrame(wx.Frame):
 		self.steplabel.append(wx.StaticText(self, -1, _("Viewer Details")))
 		self.steplabel.append(wx.StaticText(self, -1, _("Rendering")))
 		
-		self.label_10 = wx.StaticText(self, -1, _("MapTiler - Tile Generator for Map Mashups"))
+		self.label_10 = wx.StaticText(self, -1, _("MapSlicer - Tile Generator for Map Mashups"))
 		
-		self.label_8 = wx.StaticText(self, -1, _("http://www.maptiler.org/"))
+        self.label_8 = wx.StaticText(self, -1, _("https://github.com/kalxas/maptiler"))
 		self.label_9 = wx.StaticText(self, -1, _(u"(C) 2009 - Klokan Petr Přidal"))
 
 		self.button_back = wx.Button(self, -1, _("Go &Back"))
@@ -116,7 +116,7 @@ class MainFrame(wx.Frame):
 		self.__do_layout()
 
 	def __set_properties(self):
-		self.SetTitle(_("MapTiler - Tile Generator for Map Mashups"))
+		self.SetTitle(_("MapSlicer - Tile Generator for Map Mashups"))
 		if sys.platform in ['win32','win64']:
 			icon = wx.Icon( sys.executable, wx.BITMAP_TYPE_ICO )
 			self.SetIcon( icon )
@@ -176,13 +176,13 @@ class MainFrame(wx.Frame):
 	def OnAbout(self, event):
 		# First we create and fill the info object
 		info = wx.AboutDialogInfo()
-		info.Name = _("MapTiler")
+		info.Name = _("MapSlicer")
 		info.Version = config.version
 		info.Copyright = u"(C) 2008 Klokan Petr Přidal"
-		info.Description = _("""MapTiler is a powerful tool for online map publishing and generation of raster overlay mashups.
+		info.Description = _("""MapSlicer is a powerful tool for online map publishing and generation of raster overlay mashups.
 Your geodata are transformed to the tiles compatible with Google Maps and Earth - ready for uploading to your webserver.""")
 
-		#info.WebSite = ("http://www.maptiler.org/", "MapTiler HomePage")
+		#info.WebSite = ("http://www.mapslicer.org/", "MapSlicer HomePage")
 		#info.Developers = [ "Joe Programmer", "Jane Coder", "Vippy the Mascot" ]
 		#info.License = """New BSD License"""
 
@@ -190,16 +190,16 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		wx.AboutBox(info)
 
 	def OnProjectWeb(self, event):
-		webbrowser.open_new(_("http://www.maptiler.org"))
+            webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
 
 	def OnDonate(self, event):
 		webbrowser.open_new(config.DONATE_URL)
 
 	def OnGroupWeb(self, event):
-		webbrowser.open_new(_("http://groups.google.com/group/maptiler"))
+            webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
 
 	def OnHelp(self, event):
-		webbrowser.open_new(_("http://help.maptiler.org"))
+            webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
 
 	def OnOpen(self, event):
 		dlg = wx.FileDialog(
@@ -217,7 +217,7 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 
 			bad_paths = [path for path in paths	if not os.access(path, os.R_OK)]
 			if len(bad_paths) > 0:
-				wx.MessageBox(_("MapTiler doesn't have permission to read the following files:\n\n") + "\n".join(bad_paths),
+				wx.MessageBox(_("MapSlicer doesn't have permission to read the following files:\n\n") + "\n".join(bad_paths),
 					_("Bad permissions"), wx.ICON_ERROR)
 				return
 			else:
@@ -361,7 +361,7 @@ because its superdirectory '%s' is not writeable.""") % (config.outputdir, dirna
 		filename = filename.encode('utf8')
 		
 		if len(config.files) > 0:
-			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
+			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapSlicer GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
 
 		filerecord = gdalpreprocess.singlefile(filename)
 		if filerecord:
