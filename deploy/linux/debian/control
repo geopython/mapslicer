@@ -7,7 +7,7 @@ Standards-Version: 3.8.1
 
 Package: mapslicer
 Architecture: all
-Homepage: https://github.com/kalxas/maptiler
+Homepage: https://github.com/kalxas/mapslicer
 Depends: python (>=2.5), python-wxgtk2.8 (>=2.8), python-gdal (>=1.6) 
 Description: Tile Generator for Mashups.
  MapSlicer is a powerful tool for online map publishing and generation of map

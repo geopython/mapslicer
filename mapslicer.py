@@ -105,7 +105,7 @@ http://www.kyngchaos.com/software:frameworks"""), _("Error: GDAL Framework not f
 		elif sys.platform in ['win32','win64']:
 			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n
 If you used the installer then please report this problem as an issue at:
-https://github.com/kalxas/maptiler/issues"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
+https://github.com/kalxas/mapslicer/issues"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
 			sys.exit(1)
 		elif sys.platform.startswith('linux'):
 			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n

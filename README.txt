@@ -1,12 +1,12 @@
 ====================
 MapSlicer Application
 ====================
-https://github.com/kalxas/maptiler
+https://github.com/kalxas/mapslicer
 
 MapSlicer is graphical application for online map publishing. Your map can create overlay of standard maps like Google Maps, Yahoo Maps, Microsoft VirtualEarth or OpenStreetMap and can be also visualized in 3D by Google Earth. Only thing you have to do for publishing the map is to upload the automatically generated directory with tiles into your webserver.
 
 MapSlicer is an open-source application, distributed under New BSD License.
-You can download the source code from repository at https://github.com/kalxas/maptiler
+You can download the source code from repository at https://github.com/kalxas/mapslicer
 
 It is running under Microsoft Windows, Apple Mac OS X as well as on UNIX systems like Linux Ubuntu.
 
