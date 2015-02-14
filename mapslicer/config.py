@@ -1,4 +1,4 @@
-version = "1.0 beta2"
+version = "0.1"
 
 profile = 'mercator'
 files = []
@@ -23,8 +23,6 @@ yahookey = ""
 documentsdir = ""
 
 bboxgeoref = False
-
-DONATE_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=1806586"
 
 # TODO: GetText
 _ = lambda s: s

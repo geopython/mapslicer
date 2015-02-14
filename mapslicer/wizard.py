@@ -108,35 +108,12 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 				# Default name is the same as the input file without extensions.
 				config.outputdir = os.path.join(base_dir, os.path.splitext(os.path.basename( filename ))[0] )
 
-				# GTK2 doesn't allow to select nonexisting directories, so we have to make it exist.
-				if sys.platform.startswith("linux"):
-					if not os.path.exists(config.outputdir):
-						try:
-							os.makedirs(config.outputdir)
-							config.gtk2_hack_directory = config.outputdir
-						except Exception, e:
-							config.outputdir = os.getcwd()
-							config.gtk2_hack_directory = None
+			browseButton = self.FindWindowByName('browsebutton')
+			if browseButton:
+				browseButton.Bind(wx.EVT_BUTTON, self.OnBrowseButtonPressed)
+			self.FindWindowByName('outputdir').SetValue(config.outputdir)
 
-							# I hate it when I have to do this.
-							wx.MessageBox(_("""\
-You are processing file '%s' for which we can't provide default output directory, because both our \
-options -- input file directory '%s' and your current working directory '%s' -- are not writeable. \
-Please select the output directory on your own.""") % (filename, input_dir, os.getcwd()),
-							_("Can't create default output directory"), wx.ICON_ERROR)
-					else:
-						config.gtk2_hack_directory = None
-
-			self.FindWindowByName('outputdir').SetPath(config.outputdir)
 		elif step == 6:
-			# GTK2 hack. See above.
-			if sys.platform.startswith("linux") and config.gtk2_hack_directory is not None:
-				if config.gtk2_hack_directory != config.outputdir:
-					try:
-						os.rmdir(config.gtk2_hack_directory)
-					except:
-						pass
-
 			not_hybrid = config.format != 'hybrid'
 			if config.profile=='mercator':
 				self.FindWindowByName('google').Enable(not_hybrid)
@@ -166,7 +143,7 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 			self.FindWindowByName('copyright').SetValue(config.copyright)
 			self.FindWindowByName('googlekey').SetValue(config.googlekey)
 			self.FindWindowByName('yahookey').SetValue(config.yahookey)
-		
+
 	def SaveStep(self, step):
 		if step == 1:
 			# Profile
@@ -185,7 +162,6 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 			config.nodata = self.FindWindowByName('nodatapanel').GetColor()
 			print config.nodata
 		elif step == 3:
-			#config.oldsrs = config.srs
 			config.srs = self.FindWindowByName('srs').GetValue().encode('ascii','ignore').strip()
 			config.srsformat = self.FindWindowByName('srs').GetSelection()
 			print config.srs
@@ -208,19 +184,14 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 			print config.tmaxz
 			print config.format
 		elif step == 5:
-			config.outputdir = self.FindWindowByName('outputdir').GetPath().encode('utf8')
+			config.outputdir = self.FindWindowByName('outputdir').GetValue()
 			config.url = self.FindWindowByName('url').GetValue()
 			if config.url == 'http://':
 				config.url = ''
-			print config.outputdir
-			print config.url
 		elif step == 6:
 			config.google = self.FindWindowByName('google').GetValue()
 			config.openlayers = self.FindWindowByName('openlayers').GetValue()
 			config.kml = self.FindWindowByName('kml').GetValue()
-			print config.google
-			print config.openlayers
-			print config.kml
 		elif step == 7:
 			config.title = self.FindWindowByName('title').GetValue().encode('utf8')
 			if not config.title:
@@ -232,11 +203,18 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 			print config.copyright
 			print config.googlekey
 			print config.yahookey
-	
+
+	def OnBrowseButtonPressed(self, evt):
+		# browse button has been pressed to select output directory
+		outputbox = self.FindWindowByName('outputdir')
+		currentdir = outputbox.GetValue()
+		dlg = wx.DirDialog(self, _("Choose output directory"), currentdir)
+		if dlg.ShowModal() == wx.ID_OK:
+			outputbox.SetValue(dlg.GetPath())
+
 	def UpdateRenderProgress(self, complete):
 		if self.step != len(steps) - 1:
 			print _("Nothing to update - progressbar not displayed")
-			return
 		else:
 			progressbar = self.FindWindowByName('progressbar')
 			progressbar.SetValue(complete)
@@ -244,7 +222,6 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 	def UpdateRenderText(self, text):
 		if self.step != len(steps) - 1:
 			print _("Nothing to update - progresstext not displayed")
-			return
 		else:
 			progresstext = self.FindWindowByName('progresstext')
 			progresstext.SetLabel(text)
@@ -378,7 +355,8 @@ step5 = '''<h3>'''+_("Destination folder and address")+'''</h3>
 <font color="#DC5309" size="large"><b>'''+_("Where to save the generated tiles?")+'''</b></font>
 <p>
 '''+_("Result directory:")+'''<br/>
-<wxp module="wx" class="DirPickerCtrl" name="outputdir" width="100%" height="30"><param name="name" value="outputdir"></wxp>
+<wxp module="wx" class="TextCtrl" name="outputdir" width="50%" height="30"><param name="name" value="outputdir"></wxp>
+<wxp module="wx" class="Button"><param name="name" value="browsebutton"><param name="label" value="'''+_("Browse...")+'''"></wxp>
 <p>
 <font color="#DC5309" size="large"><b>'''+_("The Internet address (URL) for publishing the map:")+'''</b></font>
 <p>

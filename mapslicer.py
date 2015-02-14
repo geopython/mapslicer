@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# TODO: Cleaning the code, refactoring before 1.0 publishing
 
 import os, sys
 
@@ -41,7 +40,6 @@ import traceback
 import wx
 import mapslicer
 
-from mapslicer.bug_report import do_bug_report_dialog
 
 __version__ = mapslicer.version
 
@@ -69,17 +67,13 @@ class MapSlicerApp(wx.App):
 		print
 
 		caption = _("Exception occured")
-		message = _("An unexpected error occured:\n\n") + str(value) + _("\n\nDo you want to send an anonymous bug report?")
-
-		if wx.MessageBox(message, caption, wx.ICON_ERROR | wx.YES_NO) == wx.YES:
-			do_bug_report_dialog(self.main_frame, back_trace, self.main_frame.html.GetActiveStep())
+		message = _("An unexpected error occured:\n\n") + str(value)
+		wx.MessageBox(message, caption, wx.ICON_ERROR)
 
 
 if __name__ == "__main__":
 	
 	# TODO: GetText
-	#import gettext
-	#gettext.install("mapslicer")
 	_ = lambda s: s
 
 	# TODO: Parse command line arguments:
@@ -88,9 +82,6 @@ if __name__ == "__main__":
 	#wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic",0)
 	app = MapSlicerApp(False)
 
-	#spath = wx.StandardPaths.Get()
-	#print spath.GetExecutablePath()
-	
 	try:
 		from osgeo import gdal
 	except ImportError:
@@ -100,20 +91,20 @@ if __name__ == "__main__":
 Please install GDAL framework from the website:
 http://www.kyngchaos.com/software:frameworks"""), _("Error: GDAL Framework not found!"), wx.ICON_ERROR)
 			import webbrowser
-			webbrowser.open_new("http://www.kyngchaos.com/software:frameworks#gdal")
+			webbrowser.open_new("http://gdal.org")
 			sys.exit(1)
 		elif sys.platform in ['win32','win64']:
-			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n
-If you used the installer then please report this problem as an issue at:
-https://github.com/kalxas/mapslicer/issues"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
+			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!"""),
+				_("Error: GDAL library not found!"), wx.ICON_ERROR)
 			sys.exit(1)
 		elif sys.platform.startswith('linux'):
 			wx.MessageBox(_("""GDAL 1.6 library is not found in your system!\n
 Please install it as a package in your distribution or from the source code:
 http://trac.osgeo.org/gdal/wiki/BuildHints"""), _("Error: GDAL library not found!"), wx.ICON_ERROR)
 			sys.exit(1)
-		print _("GDAL library not available - please install GDAL and it's python module!")
+		print _("GDAL library not available - please install GDAL and its python module!")
 
 	sys.excepthook = app.ExceptHook
 	app.Show()
 	app.MainLoop()
+

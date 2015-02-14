@@ -12,7 +12,6 @@ import wizard
 import widgets
 import gdalpreprocess
 
-from bug_report import do_bug_report_dialog
 import wxgdal2tiles as wxgdal
 
 # TODO: GetText
@@ -28,8 +27,8 @@ class GenericGuiEvent(wx.PyEvent):
 		self.data = data
 
 class MainFrame(wx.Frame):
+
 	def __init__(self, *args, **kwds):
-		
 		#spath = wx.StandardPaths.Get()
 		config.documentsdir = os.path.expanduser('~')
 
@@ -43,42 +42,9 @@ class MainFrame(wx.Frame):
 		
 		self.panel_1 = wx.Panel(self, -1)
 		self.panel_2 = wx.Panel(self.panel_1, -1)
-		
-		# Menu Bar
-		self.main_frame_menubar = wx.MenuBar()
-
-		menu = wx.Menu()
-		item = menu.Append(wx.NewId(), _("Insert &raster map files"))
-		self.Bind(wx.EVT_MENU, self.OnOpen, item)
-		self.bug_report = menu.Append(wx.NewId(), _("Send a &bug report"))
-		self.Bind(wx.EVT_MENU, self.OnBugReport, self.bug_report)
-		#item = menu.Append(wx.ID_PREFERENCES, _("&Preferences"))
-		#self.Bind(wx.EVT_MENU, self.OnPrefs, item)
-		item = menu.Append(wx.ID_EXIT, _("&Exit"))
-		self.Bind(wx.EVT_MENU, self.OnQuit, item)
-		self.main_frame_menubar.Append(menu, _("&File"))
-		
-		menu = wx.Menu()
-		item = menu.Append(wx.ID_HELP, _("Online &Help && FAQ"))
-		self.Bind(wx.EVT_MENU, self.OnHelp, item)
-		item = menu.Append(wx.NewId(), _("MapSlicer User &Group"))
-		self.Bind(wx.EVT_MENU, self.OnGroupWeb, item)
-		item = menu.Append(wx.NewId(), _("Donation"))
-		self.Bind(wx.EVT_MENU, self.OnDonate, item)
-		item = menu.Append(wx.NewId(), _("Project &website"))
-		self.Bind(wx.EVT_MENU, self.OnProjectWeb, item)
-		item = menu.Append(wx.ID_ABOUT, _("&About"))
-		self.Bind(wx.EVT_MENU, self.OnAbout, item)
-		self.main_frame_menubar.Append(menu, _("&Help"))
-
-		self.Bind(EVT_GENERIC_GUI, self.updateRenderText)
-		self.Bind(wxgdal.EVT_UPDATE_PROGRESS, self.updateProgress)
-
-		self.SetMenuBar(self.main_frame_menubar)
 
 		# Events
 		self.Bind(wx.EVT_CLOSE, self.OnQuit)
-		#self.Bind(wx.EVT_RADIOBUTTON, self.OnRadio)
 		
 		# Menu Bar end
 		self.bitmap_1 = wx.StaticBitmap(self, -1, icons.getIcon140Bitmap())
@@ -86,7 +52,7 @@ class MainFrame(wx.Frame):
 		self.steplabel.append(wx.StaticText(self, -1, _("Tile Profile")))
 		self.steplabel.append(wx.StaticText(self, -1, _("Source Data Files")))
 		self.steplabel.append(wx.StaticText(self, -1, _("Spatial Reference")))
-		self.steplabel.append(wx.StaticText(self, -1, _("Tile Details"))) # Zoom levels, PNG/JPEG, Tile adressing, Postprocessing? 
+		self.steplabel.append(wx.StaticText(self, -1, _("Tile Details"))) # Zoom levels, PNG/JPEG, Tile addressing, Postprocessing?
 		self.steplabel.append(wx.StaticText(self, -1, _("Destination"))) # Directory / database
 		self.steplabel.append(wx.StaticText(self, -1, _("Viewers")))
 		self.steplabel.append(wx.StaticText(self, -1, _("Viewer Details")))
@@ -102,7 +68,6 @@ class MainFrame(wx.Frame):
 		self.button_continue = wx.Button(self, -1, _("&Continue"))
 		self.Bind(wx.EVT_BUTTON, self.OnContinue, self.button_continue)
 
-		#self.html = widgets.SpatialReferencePanel(self.panel_2, -1)
 		self.html = wizard.WizardHtmlWindow(self.panel_2, -1)
 		self.html.SetBorders(0)
 		self.html.SetMinSize((500, 385))
@@ -171,82 +136,7 @@ class MainFrame(wx.Frame):
 	def OnQuit(self,Event):
 		self.Destroy()
 
-	def OnAbout(self, event):
-		# First we create and fill the info object
-		info = wx.AboutDialogInfo()
-		info.Name = _("MapSlicer")
-		info.Version = config.version
-		info.Copyright = u"(C) 2008 Klokan Petr Přidal"
-		info.Description = _("""MapSlicer is a powerful tool for online map publishing and generation of raster overlay mashups.
-Your geodata are transformed to the tiles compatible with Google Maps and Earth - ready for uploading to your webserver.""")
-
-		#info.WebSite = ("http://www.mapslicer.org/", "MapSlicer HomePage")
-		#info.Developers = [ "Joe Programmer", "Jane Coder", "Vippy the Mascot" ]
-		#info.License = """New BSD License"""
-
-		# Then we call wx.AboutBox giving it that info object
-		wx.AboutBox(info)
-
-	def OnProjectWeb(self, event):
-		webbrowser.open_new(_("https://github.com/kalxas/mapslicer"))
-
-	def OnDonate(self, event):
-		webbrowser.open_new(config.DONATE_URL)
-
-	def OnGroupWeb(self, event):
-		webbrowser.open_new(_("https://github.com/kalxas/mapslicer"))
-
-	def OnHelp(self, event):
-		webbrowser.open_new(_("https://github.com/kalxas/mapslicer"))
-
-	def OnOpen(self, event):
-		dlg = wx.FileDialog(
-			self, message=_("Choose a file"),
-			defaultDir=config.documentsdir,
-			defaultFile="",
-			wildcard=config.supportedfiles,
-			style=wx.OPEN | wx.MULTIPLE #| wx.CHANGE_DIR
-			)
-
-		# Show the dialog and retrieve the user response. If it is the OK response, 
-		# process the data.
-		if dlg.ShowModal() == wx.ID_OK:
-			paths = dlg.GetPaths()
-
-			bad_paths = [path for path in paths	if not os.access(path, os.R_OK)]
-			if len(bad_paths) > 0:
-				wx.MessageBox(_("MapSlicer doesn't have permission to read the following files:\n\n") + "\n".join(bad_paths),
-					_("Bad permissions"), wx.ICON_ERROR)
-				return
-			else:
-				for path in paths:
-					try:
-						self._add(path)
-					except gdalpreprocess.PreprocessError, e:
-						wx.MessageBox(str(e), _("Can't add a file"), wx.ICON_ERROR)
-						return
-
-		step = self.html.GetActiveStep()
-		self.SetStep(2)
-
-	def OnBugReport(self, event):
-		if len(config.files) == 0:
-			wx.MessageBox(_("""
-The bug report feature is intended for reporting issues with specific \
-input files. You have not selected any yet."""), _("No input files selected"), wx.ICON_INFORMATION)
-			return
-
-		do_bug_report_dialog(self, "", self.html.GetActiveStep())
-
-
-	def OnPrefs(self, event):
-		dlg = wx.MessageDialog(self, _("This would be an preferences Dialog\n")+
-									 _("If there were any preferences to set.\n"),
-								_("Preferences"), wx.OK | wx.ICON_INFORMATION)
-		dlg.ShowModal()
-		dlg.Destroy()
-
-	def SetLableUpTo(self, step):
+	def SetLabelUpTo(self, step):
 		if step > len(self.steplabel):
 			step = len(self.steplabel)
 		for i in range(0,step):
@@ -256,7 +146,7 @@ input files. You have not selected any yet."""), _("No input files selected"), w
 
 	def SetStep(self, step):
 		# 1 - 7 normal, step 8 - before render + rendering + resume, step 9 - final
-		self.SetLableUpTo(step)
+		self.SetLabelUpTo(step)
 		
 		# Label of the buttons
 		if step < 8:
@@ -278,11 +168,8 @@ input files. You have not selected any yet."""), _("No input files selected"), w
 			self.button_continue.Enable()
 			
 		# Enable / Disable
-		if step == 1:
-			self.button_back.Enable(False)
-		else:
-			self.button_back.Enable()
-			
+		self.button_back.Enable(step > 1)
+
 		if step == 8 and self.rendering:
 			self.button_continue.Enable(False)
 		else:
@@ -314,10 +201,7 @@ input files. You have not selected any yet."""), _("No input files selected"), w
 			self.html.SaveStep(3)
 			#print config.srs
 			if config.files[0][1] != '':
-				print type(config.srs)
-				print config.srs
 				srs = gdalpreprocess.SRSInput(config.srs)
-				print srs
 				if not srs:
 					wx.MessageBox(_("""You have to specify reference system of your coordinates.\n\nTIP: for latitude/longitude in WGS84 you should type 'EPSG:4326'"""), _("Not valid spatial reference system"), wx.ICON_ERROR)
 					return
@@ -367,7 +251,6 @@ because its superdirectory '%s' is not writeable.""") % (config.outputdir, dirna
 			config.files.append(filerecord)
 
 	def _renderstop(self):
-		
 		self.g2t.stop()
 		self.abortEvent.set()
 		self.rendering = False
@@ -383,15 +266,15 @@ because its superdirectory '%s' is not writeable.""") % (config.outputdir, dirna
 		self.jobID += 1
 		
 		params = self.createParams()
-		print "-"*20
-		for p in params:
-			print type(p), p
+		#print "-"*20
+		#for p in params:
+		#	print type(p), p
 		
 		delayedresult.startWorker(self._resultConsumer, self._resultProducer,
 				wargs=(self.jobID,self.abortEvent, params), jobID=self.jobID)
-	
+
+
 	def createParams(self):
-		
 		params = ['--profile',config.profile if not config.format.startswith('garmin') else 'garmin',
 			'--s_srs',config.srs,
 			'--zoom',"%i-%i" % (config.tminz, config.tmaxz),
