@@ -5,19 +5,19 @@ from setuptools import setup
 setup(
     options=dict(
         py2app=dict(
-            iconfile='resources/maptiler.icns',
+            iconfile='resources/mapslicer.icns',
             excludes='wx,osgeo,PIL,numpy',
             semi_standalone='yes',
             use_pythonpath='yes',
-            resources=['resources/license/LICENSE.txt','maptiler'],
+            resources=['resources/license/LICENSE.txt','mapslicer'],
             plist=dict(
-                CFBundleName               = "MapTiler",
+                CFBundleName               = "MapSlicer",
                 CFBundleShortVersionString = "1.0.alpha2",     # must be in X.X.X format
-                CFBundleGetInfoString      = "MapTiler 1.0 alpha2",
-                CFBundleExecutable         = "MapTiler",
-                CFBundleIdentifier         = "cz.klokan.maptiler",
+                CFBundleGetInfoString      = "MapSlicer 1.0 alpha2",
+                CFBundleExecutable         = "MapSlicer",
+                CFBundleIdentifier         = "cz.klokan.mapslicer",
             ),
         ),
     ),
-    app=[ 'maptiler.py' ]
+    app=[ 'mapslicer.py' ]
 )
