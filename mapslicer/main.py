@@ -39,14 +39,16 @@ class MainFrame(wx.Frame):
 		
 		kwds["style"] = wx.DEFAULT_FRAME_STYLE
 		wx.Frame.__init__(self, *args, **kwds)
-		
+
 		self.panel_1 = wx.Panel(self, -1)
 		self.panel_2 = wx.Panel(self.panel_1, -1)
 
 		# Events
+		self.Bind(EVT_GENERIC_GUI, self.updateRenderText)
+		self.Bind(wxgdal.EVT_UPDATE_PROGRESS, self.updateProgress)
 		self.Bind(wx.EVT_CLOSE, self.OnQuit)
-		
-		# Menu Bar end
+
+		# List of steps on left side
 		self.bitmap_1 = wx.StaticBitmap(self, -1, icons.getIcon140Bitmap())
 		self.steplabel = []
 		self.steplabel.append(wx.StaticText(self, -1, _("Tile Profile")))
@@ -237,9 +239,8 @@ because its superdirectory '%s' is not writeable.""") % (config.outputdir, dirna
 			self.SetStep( step + 1 )
 		if step > 8:
 			self.Destroy()
-			
-	def _add(self, filename):
 
+	def _add(self, filename):
 		filename = filename.encode('utf8')
 		
 		if len(config.files) > 0:
