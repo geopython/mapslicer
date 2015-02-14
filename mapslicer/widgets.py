@@ -120,7 +120,7 @@ class FilePanel(wx.Panel):
 	def _add(self, filename):
 
 		if len(config.files) > 0:
-			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapTiler GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
+			wx.MessageBox(_("""Unfortunately the merging of files is not yet implemented in the MapSlicer GUI. Only the first file in the list is going to be rendered."""), _("Not yet implemented :-("), wx.ICON_ERROR)
 		
 		filename = filename.encode('utf8')
 
@@ -157,7 +157,7 @@ class FilePanel(wx.Panel):
 
 			bad_paths = [path for path in paths	if not os.access(path, os.R_OK)]
 			if len(bad_paths) > 0:
-				wx.MessageBox(_("MapTiler doesn't have permission to read the following files:\n\n") + "\n".join(bad_paths),
+				wx.MessageBox(_("MapSlicer doesn't have permission to read the following files:\n\n") + "\n".join(bad_paths),
 					_("Bad permissions"), wx.ICON_ERROR)
 			else:
 				for path in paths:
@@ -432,7 +432,7 @@ class SpatialReferencePanel(wx.Panel):
 			urx, ury = trans.TransformPoint(T[0] + T[1]*xsize, T[3] + T[4]*xsize)[:2]
 			llx, lly = trans.TransformPoint(T[0] + T[2]*ysize, T[3] + T[5]*ysize)[:2]
 			lrx, lry = trans.TransformPoint(T[0] + T[1]*xsize + T[2]*ysize, T[3] + T[4]*xsize + T[5]*ysize )[:2]
-			webbrowser.open_new("http://www.maptiler.org/preview/?points=%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f" % 
+			webbrowser.open_new("http://www.mapslicer.org/preview/?points=%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f,%.10f" % 
 				(uly, ulx, ury, urx, lry, lrx, lly, llx))
 		except Exception, error:
 			wx.MessageBox("%s" % error , _("The SRS definition is not correct"), wx.ICON_ERROR)

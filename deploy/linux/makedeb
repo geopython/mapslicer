@@ -1,21 +1,21 @@
 #!/bin/sh
 
-if [ ! -f maptiler.py  -o  ! -d maptiler ];
+if [ ! -f mapslicer.py  -o  ! -d mapslicer ];
 then
-    echo "The script must be invoked from the maptiler root directory."
+    echo "The script must be invoked from the mapslicer root directory."
     exit 1
 fi
 
 PYTHON=`which python`
 SANDBOX=`mktemp -d`
-FILES="maptiler.py maptiler README.txt deploy/linux/maptiler.desktop \
+FILES="mapslicer.py mapslicer README.txt deploy/linux/mapslicer.desktop \
        resources/icon.png"
 
-# get maptiler version
-VERSION=`$PYTHON -c 'import maptiler; print maptiler.version.replace(" ",".")'`
+# get mapslicer version
+VERSION=`$PYTHON -c 'import mapslicer; print mapslicer.version.replace(" ",".")'`
 
 # name the archive and directory according to debian policy
-ARCHNAME="MapTiler-$VERSION"
+ARCHNAME="MapSlicer-$VERSION"
 
 # create sandbox
 mkdir "$SANDBOX/$ARCHNAME"

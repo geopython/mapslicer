@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Icon=/usr/share/mapslicer/icon.png
+Name=MapSlicer
+Comment=Tile Generator for Mashups
+Exec=/usr/bin/mapslicer
+Terminal=false
+Type=Application
+Categories=Geography;
+StartupNotify=false

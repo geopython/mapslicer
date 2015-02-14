@@ -26,7 +26,7 @@ def process_tiles(args, method):
 	"""Process base or overview tiles."""
 
 	try:
-		g2t = maptiler.gdal2tiles.GDAL2Tiles(args, is_subprocess=True)
+		g2t = mapslicer.gdal2tiles.GDAL2Tiles(args, is_subprocess=True)
 		g2t.open_input()
 
 		if method == "base":
@@ -67,7 +67,7 @@ class PPGDAL2Tiles(GDAL2Tiles):
 		self.__pp_lock.acquire()
 
 		job = self.__pp_job_server.submit(process_tiles, args=(self.__pp_args, method),
-					modules=("maptiler.gdal2tiles", "sys"))
+					modules=("mapslicer.gdal2tiles", "sys"))
 
 		progress = 0.0
 
@@ -115,7 +115,7 @@ def wxGDAL2TilesFactory(super_klass):
 
 	"""Return subclass of GDAL2Tiles-like super_klass with code for GUI added.
 	
-	The reason behind this factory is that MapTiler GUI uses GDAL2Tiles object
+	The reason behind this factory is that MapSlicer GUI uses GDAL2Tiles object
 	to calculate some default values. Using parallel version for this is overkill
 	and adding this code to both `GDAL2Tiles' and `PPGDAL2Tiles' is not DRY.
 	"""

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# MapTiler/GDAL2Tiles Preprocess module
+# MapSlicer/GDAL2Tiles Preprocess module
 # -------------------------------------
 # Copyright (C) 2008, Klokan Petr Pridal <klokan@klokan.cz>
 #

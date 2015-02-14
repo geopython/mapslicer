@@ -266,7 +266,7 @@ Please select the output directory on your own.""") % (filename, input_dir, os.g
 		self.FindWindowByName('throbber').ToggleOverlay(True) 
 
 step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
-	'''+_("MapTiler generates tiles for fast online map publishing.")+'''
+	'''+_("MapSlicer generates tiles for fast online map publishing.")+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("What kind of tiles would you like to generate?")+'''</b></font>
 	<p>
@@ -313,18 +313,18 @@ step2 = '''<h3>'''+_("Source data files")+'''</h3>
 	    <param name="name" value="listctrl">
 	</wxp>
 	-->
-	<wxp module="maptiler.widgets" class="FilePanel" name="test" height="230" width=100%>
+	<wxp module="mapslicer.widgets" class="FilePanel" name="test" height="230" width=100%>
 	<param name="name" value="filepanel"></wxp>
 	<p>
-	<wxp module="maptiler.widgets" class="NodataPanel" name="test" height="30" width=100%>
+	<wxp module="mapslicer.widgets" class="NodataPanel" name="test" height="30" width=100%>
 	<param name="name" value="nodatapanel"></wxp>'''
 
 step3 = '''<h3>'''+_("Spatial reference system (SRS)")+'''</h3>
-	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in the <a href="http://help.maptiler.org/coordinates/">MapTiler help</a>.')+'''
+	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in the <a href="http://help.mapslicer.org/coordinates/">MapSlicer help</a>.')+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("What is the Spatial Reference System used in your files?")+'''</b></font>
 	<p>
-	<wxp module="maptiler.widgets" class="SpatialReferencePanel" name="test" height="260" width=100%>
+	<wxp module="mapslicer.widgets" class="SpatialReferencePanel" name="test" height="260" width=100%>
 	<param name="name" value="srs">
 	</wxp>'''
 
@@ -399,7 +399,7 @@ step5 = '''<h3>'''+_("Destination folder and address")+'''</h3>
 </font>'''
 
 step6 = '''<h3>'''+_("Selection of the viewers")+'''</h3>
-'''+_("MapTiler can also generate simple web viewers for presenting the tiles as a map overlay. You can use these viewers as a base for your mashups. Similarly it is possible to generate KML files for Google Earth.")+'''
+'''+_("MapSlicer can also generate simple web viewers for presenting the tiles as a map overlay. You can use these viewers as a base for your mashups. Similarly it is possible to generate KML files for Google Earth.")+'''
 <p>
 <font color="#DC5309" size="large"><b>'''+_("What viewers should be generated?")+'''</b></font>
 <p>
@@ -458,17 +458,17 @@ step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
     <param name="label" value="'''+_("Click on the 'Render' button to start the rendering...")+'''">
 </wxp>
 <p>
-<wxp module="maptiler.widgets" class="Throbber" name="throbber" width="16" height="16">
+<wxp module="mapslicer.widgets" class="Throbber" name="throbber" width="16" height="16">
     <param name="name" value="throbber">
 </wxp>
 </center>
 <font size="-1">
 <p>&nbsp;
-<br>'''+_("Thank you for using MapTiler application.")+" "+_('This is an open-source project - you can help us to make it better.')+" "+_('Join the <a href="http://groups.google.com/group/maptiler">MapTiler User Group</a> to speak with other MapTiler users and tell us about the maps you are publishing!')+" "+_('You can also <a href="http://maptiler.uservoice.com/">suggest improvements</a> or <a href="http://code.google.com/p/maptiler/issues/list">report bugs</a>.')+'''
+<br>'''+_("Thank you for using MapSlicer application.")+" "+_('This is an open-source project - you can help us to make it better.')+" "+_('Join the <a href="http://groups.google.com/group/mapslicer">MapSlicer User Group</a> to speak with other MapSlicer users and tell us about the maps you are publishing!')+" "+_('You can also <a href="http://mapslicer.uservoice.com/">suggest improvements</a> or <a href="http://code.google.com/p/mapslicer/issues/list">report bugs</a>.')+'''
 <p>
-'''+_("Please consider")+' <b><a href="'+config.DONATE_URL+'">'+_("donation via PayPal or Credit Card.")+ "</a></b> "+_("We welcome contribution to the source code, help with documentation, localization or with user support.")+" "+_('Thanks belongs to <a href="http://help.maptiler.org/credits/">those who have already helped</a>!')+'''
+'''+_("Please consider")+' <b><a href="'+config.DONATE_URL+'">'+_("donation via PayPal or Credit Card.")+ "</a></b> "+_("We welcome contribution to the source code, help with documentation, localization or with user support.")+" "+_('Thanks belongs to <a href="http://help.mapslicer.org/credits/">those who have already helped</a>!')+'''
 <p>
-'''+_('Authors of this utility provide <b><a href="http://www.maptiler.com/">commercial support</a></b> related to the map tile rendering, geodata processing and customization of open-source GIS tools. We have developed also a <b><a href="http://www.maptiler.com/">fast parallelized utility</a></b> for efficient tile rendering on Multi-Core processors and on clusters like Amazon EC2.</font>')
+'''+_('Authors of this utility provide <b><a href="http://www.mapslicer.com/">commercial support</a></b> related to the map tile rendering, geodata processing and customization of open-source GIS tools. We have developed also a <b><a href="http://www.mapslicer.com/">fast parallelized utility</a></b> for efficient tile rendering on Multi-Core processors and on clusters like Amazon EC2.</font>')
 
 # step9 - step8 with Resume button
 
