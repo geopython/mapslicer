@@ -123,7 +123,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 							# I hate it when I have to do this.
 							wx.MessageBox(_("""\
 We are terribly sorry for this error. It is a known issue stemming from the fact that we try hard to \
-support all major software platforms -- Microsoft Windos, Mac OS X and UNIX systems. Unfortunately \
+support all major software platforms -- Microsoft Windows, Mac OS X and UNIX systems. Unfortunately \
 they don't have all the same capabilities.
 
 You are processing file '%s' for which we can't provide default output directory, because both our \
@@ -320,7 +320,7 @@ step2 = '''<h3>'''+_("Source data files")+'''</h3>
 	<param name="name" value="nodatapanel"></wxp>'''
 
 step3 = '''<h3>'''+_("Spatial reference system (SRS)")+'''</h3>
-	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in the <a href="http://help.mapslicer.org/coordinates/">MapSlicer help</a>.')+'''
+	'''+_('It is necessary to know which coordinate system (Spatial Reference System) is used for georeferencing of the input files. More info in <a href="http://www.spatialreference.org">spatialreference.org</a>.')+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("What is the Spatial Reference System used in your files?")+'''</b></font>
 	<p>
@@ -466,7 +466,7 @@ step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
 <p>&nbsp;
 <br>'''+_("Thank you for using MapSlicer application.")+" "+_('This is an open-source project - you can help us to make it better.')+" "+_('Join the <a href="http://groups.google.com/group/mapslicer">MapSlicer User Group</a> to speak with other MapSlicer users and tell us about the maps you are publishing!')+" "+_('You can also <a href="http://mapslicer.uservoice.com/">suggest improvements</a> or <a href="http://code.google.com/p/mapslicer/issues/list">report bugs</a>.')+'''
 <p>
-'''+_("Please consider")+' <b><a href="'+config.DONATE_URL+'">'+_("donation via PayPal or Credit Card.")+ "</a></b> "+_("We welcome contribution to the source code, help with documentation, localization or with user support.")+" "+_('Thanks belongs to <a href="http://help.mapslicer.org/credits/">those who have already helped</a>!')+'''
+'''+_("Please consider")+' <b><a href="'+config.DONATE_URL+'">'+_("donation via PayPal or Credit Card.")+ "</a></b> "+_("We welcome contribution to the source code, help with documentation, localization or with user support.")+" "+_('Thanks belongs to <a href="http://help.maptiler.org/credits/">those who have already helped</a>!')+'''
 <p>
 '''+_('Authors of this utility provide <b><a href="http://www.mapslicer.com/">commercial support</a></b> related to the map tile rendering, geodata processing and customization of open-source GIS tools. We have developed also a <b><a href="http://www.mapslicer.com/">fast parallelized utility</a></b> for efficient tile rendering on Multi-Core processors and on clusters like Amazon EC2.</font>')
 
