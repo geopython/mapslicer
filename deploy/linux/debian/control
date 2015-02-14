@@ -1,15 +1,15 @@
-Source: maptiler
+Source: mapslicer
 Section: graphics
 Priority: optional
-Maintainer: Václav "Keo" Klusák <keo@keo.cz> 
+Maintainer: Angelos Tzotsos <gcpp.kalxas@gmail.com>
 Build-Depends: debhelper (>=7.0.0)
 Standards-Version: 3.8.1
 
-Package: maptiler
+Package: mapslicer
 Architecture: all
-Homepage: http://maptiler.org/
+Homepage: https://github.com/kalxas/maptiler
 Depends: python (>=2.5), python-wxgtk2.8 (>=2.8), python-gdal (>=1.6) 
-Description: Map Tile Generator for Mashups.
- MapTiler is a powerful tool for online map publishing and generation of map 
+Description: Tile Generator for Mashups.
+ MapSlicer is a powerful tool for online map publishing and generation of map
  overlay mashups. Your geodata are transformed to the tiles compatible with 
  Google Maps and Earth - ready for uploading to your webserver.

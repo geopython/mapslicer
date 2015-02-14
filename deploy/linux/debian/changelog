@@ -1,8 +1,7 @@
-maptiler ($VERSION) unstable; urgency=low
+mapslicer ($VERSION) unstable; urgency=low
 
   * Release. 
 
-    This is a debianized version of Maptiler from Subversion.
-    http://www.maptiler.org/
+    This is a debianized version of MapSlicer from git.
 
- -- Václav "Keo" Klusák <keo@keo.cz>  $DATE
+ -- Angelos Tzotsos <gcpp.kalxas@gmail.com>  $DATE

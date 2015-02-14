@@ -25,24 +25,24 @@ install: build
 	dh_clean -k
 	dh_installdirs
 
-	mkdir -p $(CURDIR)/debian/maptiler
+	mkdir -p $(CURDIR)/debian/mapslicer
 
-	mkdir -p $(CURDIR)/debian/maptiler/usr/lib/maptiler
-	cp maptiler.py $(CURDIR)/debian/maptiler/usr/lib/maptiler
-	cp -r maptiler $(CURDIR)/debian/maptiler/usr/lib/maptiler
+	mkdir -p $(CURDIR)/debian/mapslicer/usr/lib/mapslicer
+	cp mapslicer.py $(CURDIR)/debian/mapslicer/usr/lib/mapslicer
+	cp -r mapslicer $(CURDIR)/debian/mapslicer/usr/lib/mapslicer
 
-	mkdir -p $(CURDIR)/debian/maptiler/usr/bin
-	ln -s /usr/lib/maptiler/maptiler.py $(CURDIR)/debian/maptiler/usr/bin/maptiler
-	#chmod a+x $(CURDIR)/debian/maptiler/usr/bin/maptiler
+	mkdir -p $(CURDIR)/debian/mapslicer/usr/bin
+	ln -s /usr/lib/mapslicer/mapslicer.py $(CURDIR)/debian/mapslicer/usr/bin/mapslicer
+	#chmod a+x $(CURDIR)/debian/mapslicer/usr/bin/mapslicer
 
-	mkdir -p $(CURDIR)/debian/maptiler/usr/share/maptiler
-	cp -r resources/* $(CURDIR)/debian/maptiler/usr/share/maptiler
+	mkdir -p $(CURDIR)/debian/mapslicer/usr/share/mapslicer
+	cp -r resources/* $(CURDIR)/debian/mapslicer/usr/share/mapslicer
 
-	mkdir -p $(CURDIR)/debian/maptiler/usr/share/applications
-	cp deploy/linux/maptiler.desktop $(CURDIR)/debian/maptiler/usr/share/applications
+	mkdir -p $(CURDIR)/debian/mapslicer/usr/share/applications
+	cp deploy/linux/mapslicer.desktop $(CURDIR)/debian/mapslicer/usr/share/applications
 
-	mkdir -p $(CURDIR)/debian/maptiler/usr/share/doc/maptiler
-	cp README.txt $(CURDIR)/debian/maptiler/usr/share/doc/maptiler
+	mkdir -p $(CURDIR)/debian/mapslicer/usr/share/doc/mapslicer
+	cp README.txt $(CURDIR)/debian/mapslicer/usr/share/doc/mapslicer
 
 
 binary-indep: build install
