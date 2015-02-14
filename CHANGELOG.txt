@@ -1,5 +1,15 @@
-MapTiler ChangeLog
+MapSlicer ChangeLog
 ==================
+
+1.0 Beta 3: 14 Feb 2015
+-----------------------
+
+- Forked project and renamed to MapSlicer
+
+1.0 Beta 2: 26 Aug 2009
+-----------------------
+
+- Code included in OSGeoLive
 
 1.0 Alpha 3: 26 Jan 2009
 -----------------------
