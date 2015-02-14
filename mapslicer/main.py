@@ -96,7 +96,7 @@ class MainFrame(wx.Frame):
 		
 		self.label_10 = wx.StaticText(self, -1, _("MapSlicer - Tile Generator for Map Mashups"))
 		
-        self.label_8 = wx.StaticText(self, -1, _("https://github.com/kalxas/maptiler"))
+		self.label_8 = wx.StaticText(self, -1, _("https://github.com/kalxas/maptiler"))
 		self.label_9 = wx.StaticText(self, -1, _(u"(C) 2009 - Klokan Petr Přidal"))
 
 		self.button_back = wx.Button(self, -1, _("Go &Back"))
@@ -190,16 +190,16 @@ Your geodata are transformed to the tiles compatible with Google Maps and Earth 
 		wx.AboutBox(info)
 
 	def OnProjectWeb(self, event):
-            webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
+		webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
 
 	def OnDonate(self, event):
 		webbrowser.open_new(config.DONATE_URL)
 
 	def OnGroupWeb(self, event):
-            webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
+		webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
 
 	def OnHelp(self, event):
-            webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
+		webbrowser.open_new(_("https://github.com/kalxas/maptiler"))
 
 	def OnOpen(self, event):
 		dlg = wx.FileDialog(

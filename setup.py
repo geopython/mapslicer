@@ -14,7 +14,7 @@ if sys.platform in ['win32','win64']:
 	      version=version.replace(' ','.'),
 	      description = "MapSlicer - Map Tile Generator for Mashups",
 	      long_description= "MapSlicer is a powerful tool for online map publishing and generation of map overlay mashups. Your geodata are transformed to the tiles compatible with Google Maps and Earth - ready for uploading to your webserver.",
-          url='https://github.com/kalxas/maptiler',
+	      url='https://github.com/kalxas/maptiler',
 	      author='Klokan Petr Pridal',
 	      author_email='klokan@klokan.cz',
 	      packages=['mapslicer'],
