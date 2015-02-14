@@ -464,11 +464,9 @@ step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
 </center>
 <font size="-1">
 <p>&nbsp;
-<br>'''+_("Thank you for using MapSlicer application.")+" "+_('This is an open-source project - you can help us to make it better.')+" "+_('Join the <a href="http://groups.google.com/group/mapslicer">MapSlicer User Group</a> to speak with other MapSlicer users and tell us about the maps you are publishing!')+" "+_('You can also <a href="http://mapslicer.uservoice.com/">suggest improvements</a> or <a href="http://code.google.com/p/mapslicer/issues/list">report bugs</a>.')+'''
+<br>'''+_("Thank you for using MapSlicer application.")+" "+_('This is an open-source project - you can help us to make it better.')+" "+_('Visit our <a href="http://github.com/kalxas/mapslicer">GitHub Project Page</a> to report bugs, contribute source code, help with documentation and tell us about the maps you are publishing!')+'''
 <p>
-'''+_("Please consider")+' <b><a href="'+config.DONATE_URL+'">'+_("donation via PayPal or Credit Card.")+ "</a></b> "+_("We welcome contribution to the source code, help with documentation, localization or with user support.")+" "+_('Thanks belongs to <a href="http://help.maptiler.org/credits/">those who have already helped</a>!')+'''
-<p>
-'''+_('Authors of this utility provide <b><a href="http://www.mapslicer.com/">commercial support</a></b> related to the map tile rendering, geodata processing and customization of open-source GIS tools. We have developed also a <b><a href="http://www.mapslicer.com/">fast parallelized utility</a></b> for efficient tile rendering on Multi-Core processors and on clusters like Amazon EC2.</font>')
+'''+_('Thanks belongs to the open source MapTiler project for <a href="http://help.maptiler.org/credits/">their original contribution</a>!')
 
 # step9 - step8 with Resume button
 
@@ -492,13 +490,6 @@ stepfinal = '''<h3>'''+_("Your rendering task is finished!")+'''</h3>
 <p>&nbsp;
 <p>&nbsp;
 <p>
-<center>
-<a href="'''+config.DONATE_URL+'''"><img src="memory:donatebtn.png"></a>
-<p>
-'''+_("Please support development and maintenance of this project.")+'''
-'''+_("Even a small amount helps!")+'''
-'''+_("You can use PayPal or credit cards like VISA, MasterCard, American Express.")+'''
-</center>
 '''
 
 steps = ['NULL',step1, step2, step3, step4, step5, step6, step7, step8 ]
