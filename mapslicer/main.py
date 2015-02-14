@@ -57,11 +57,11 @@ class MainFrame(wx.Frame):
 		self.steplabel.append(wx.StaticText(self, -1, _("Viewers")))
 		self.steplabel.append(wx.StaticText(self, -1, _("Viewer Details")))
 		self.steplabel.append(wx.StaticText(self, -1, _("Rendering")))
-		
+
 		self.label_10 = wx.StaticText(self, -1, _("MapSlicer - Tile Generator for Map Mashups"))
-		
-		self.label_8 = wx.StaticText(self, -1, _("https://wiki.osgeo.org/wiki/MapSlicer"))
-		self.label_9 = wx.StaticText(self, -1, _(u"(C) 2009 - Klokan Petr Přidal"))
+
+		self.label_8 = wx.StaticText(self, -1, _("Version %s") % config.version )
+		self.label_9 = wx.StaticText(self, -1, _("https://wiki.osgeo.org/wiki/MapSlicer"))
 
 		self.button_back = wx.Button(self, -1, _("Go &Back"))
 		self.Bind(wx.EVT_BUTTON, self.OnBack, self.button_back)

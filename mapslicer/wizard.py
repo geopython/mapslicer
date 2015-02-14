@@ -29,7 +29,7 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 
 	def OnLinkClicked(self, linkinfo):
 		webbrowser.open_new(linkinfo.GetHref())
-		
+
 	def GetActiveStep(self):
 		return self.step 
 
@@ -132,11 +132,11 @@ class WizardHtmlWindow(wx.html.HtmlWindow):
 				self.FindWindowByName('google').Enable(False)
 				self.FindWindowByName('openlayers').Enable(not_hybrid)
 				self.FindWindowByName('kml').Enable(True)
-				
+
 			self.FindWindowByName('google').SetValue(config.google)
 			self.FindWindowByName('openlayers').SetValue(config.openlayers)
 			self.FindWindowByName('kml').SetValue(config.kml)
-			
+
 		elif step == 7:
 			config.title = os.path.basename( config.files[0][0] )
 			self.FindWindowByName('title').SetValue(config.title)
@@ -270,7 +270,7 @@ step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
 	'''+_("Tiles based on the dimensions of the picture in pixels (width and height). Stand-alone presentation even for images without georeference.")+'''
 	</blockquote>
 	</font>'''
-	
+
 step2 = '''<h3>'''+_("Source data files")+'''</h3>
 	'''+_("Please choose the raster files of the maps you would like to publish.")+'''
 	<p>
@@ -298,7 +298,6 @@ step3 = '''<h3>'''+_("Spatial reference system (SRS)")+'''</h3>
 
 step4 = '''<h3>'''+_("Details about the tile pyramid")+'''</h3> <!-- Zoom levels, Tile Format (PNG/JPEG) & Addressing, PostProcessing -->
 	'''+_("In this step you should specify the details related to rendered tile pyramid.")+'''
-	'''+_("<!-- file format and convention for tile addressing (names of the tile files) which you would like to use. -->")+'''
 	<p>
 	<font color="#DC5309" size="large"><b>'''+_("Zoom levels to generate:")+'''</b></font>
 	<p>
@@ -411,7 +410,7 @@ step7 = '''<h3>'''+_("Details for generating the viewers")+'''</h3>
 <font size="-1">
 '''+_('Note: You can get it <a href="http://developer.yahoo.com/wsregapp/">at this webpage</a>.')+'''
 </font>'''
-	
+
 step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
 '''+_("Now you can start the rendering of the map tiles. It can be a time consuming process especially for large datasets... so be patient please.")+'''
 <p>
@@ -433,7 +432,7 @@ step8 = '''<h3>'''+_("Tile rendering")+'''</h3>
 </center>
 <font size="-1">
 <p>&nbsp;
-<br>'''+_("Thank you for using MapSlicer application.")+" "+_('This is an open-source project - you can help us to make it better.')
+<br>'''+_("Thank you for using MapSlicer application.")+"<br>"+_('This is an open-source project - you can help us to make it better.')
 
 # step9 - step8 with Resume button
 
