@@ -141,9 +141,9 @@ class _Worker(object):
     command = "\"" + sys.executable + "\" -u \"" \
             + os.path.dirname(os.path.abspath(__file__))\
             + os.sep + "ppworker.py\""
-    if sys.executable.lower().endswith('maptiler.exe'):
+    if sys.executable.lower().endswith('mapslicer.exe'):
         dir = os.path.dirname( sys.executable ) + os.sep
-        command = '''"%s" -u -c "import sys; sys.path.append('%s'); from maptiler.pp.ppworker import _WorkerProcess; wp = _WorkerProcess(); wp.run()" ''' % ( dir + 'python.exe', dir + 'library.zip')
+        command = '''"%s" -u -c "import sys; sys.path.append('%s'); from mapslicer.pp.ppworker import _WorkerProcess; wp = _WorkerProcess(); wp.run()" ''' % ( dir + 'python.exe', dir + 'library.zip')
 
     if sys.platform.startswith("win"):
         # workargound for windows
