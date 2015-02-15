@@ -505,7 +505,7 @@ msgstr ""
 
 #: mapslicer/wizard.py:256
 msgid ""
-"Tiles and KML metadata for 3D vizualization in Google Earth desktop "
+"Tiles and KML metadata for 3D visualization in Google Earth desktop "
 "application or in the web browser plugin."
 msgstr ""
 
@@ -661,7 +661,7 @@ msgstr ""
 
 #: mapslicer/wizard.py:381
 msgid ""
-"Overlay of Google Maps, Virtual Earth, Yahoo Maps, OpenStreetMap and "
+"Overlay of Google Maps, Bing Maps, Yahoo Maps, OpenStreetMap and "
 "OpenAerialMap, WMS and WFS layers and another sources available in the open-"
 "source project <a href=\"http://www.openlayers.org/\">OpenLayers</a>."
 msgstr ""

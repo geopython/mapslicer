@@ -1,10 +1,12 @@
 MapSlicer ChangeLog
-==================
+===================
 
 1.0 Beta 3: 14 Feb 2015
 -----------------------
 
 - Forked project and renamed to MapSlicer
+- Replaced directory selection control for output
+- Removed menu bar, web links and requests for donations
 
 1.0 Beta 2: 26 Aug 2009
 -----------------------

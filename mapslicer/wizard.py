@@ -12,9 +12,6 @@ import icons
 
 from wxgdal2tiles import wxGDAL2Tiles
 
-# TODO: GetText
-_ = lambda s: s
-
 class WizardHtmlWindow(wx.html.HtmlWindow):
 	def __init__(self, parent, id, pos=wx.DefaultPosition, size = wx.DefaultSize ):
 		wx.html.HtmlWindow.__init__(self, parent, id, pos=pos, size=size, style=(wx.html.HW_NO_SELECTION |  wx.FULL_REPAINT_ON_RESIZE) )
@@ -253,7 +250,7 @@ step1 = "<h3>"+_("Selection of the tile profile")+'''</h3>
 	    <param name="name" value="gearth">
 	</wxp>
 	<blockquote>
-	'''+_('Tiles and KML metadata for 3D vizualization in Google Earth desktop application or in the web browser plugin.')+''' 
+	'''+_('Tiles and KML metadata for 3D visualization in Google Earth desktop application or in the web browser plugin.')+''' 
 	</blockquote>
 	<wxp module="wx" class="RadioButton" name="test">
 	    <param name="label" value="'''+_("WGS84 Plate Carree (Geodetic)")+'''">
@@ -378,7 +375,7 @@ step6 = '''<h3>'''+_("Selection of the viewers")+'''</h3>
 </blockquote>
 <wxp module="wx" class="CheckBox" name="test"><param name="name" value="openlayers"><param name="label" value="'''+_("OpenLayers")+'''"></wxp>
 <blockquote>
-'''+_('Overlay of Google Maps, Virtual Earth, Yahoo Maps, OpenStreetMap and OpenAerialMap, WMS and WFS layers and another sources available in the open-source project <a href="http://www.openlayers.org/">OpenLayers</a>.')+'''
+'''+_('Overlay of Google Maps, Bing Maps, Yahoo Maps, OpenStreetMap and OpenAerialMap, WMS and WFS layers and another sources available in the open-source project <a href="http://www.openlayers.org/">OpenLayers</a>.')+'''
 </blockquote>
 <wxp module="wx" class="CheckBox" name="test"><param name="name" value="kml"><param name="label" value="'''+("Google Earth (KML SuperOverlay)")+'''"></wxp>
 <blockquote>
