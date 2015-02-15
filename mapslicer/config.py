@@ -1,3 +1,5 @@
+import gettext
+
 version = "1.0 rc1"
 
 profile = 'mercator'
@@ -24,8 +26,8 @@ documentsdir = ""
 
 bboxgeoref = False
 
-# TODO: GetText
-_ = lambda s: s
+# GetText
+_ = gettext.gettext
 
 # WellKnownGeogCS
 wellknowngeogcs = ['WGS84','WGS72','NAD27','NAD83']
@@ -116,3 +118,4 @@ epsg4326 = """GEOGCS["WGS 84",
     UNIT["degree",0.01745329251994328,
         AUTHORITY["EPSG","9122"]],
     AUTHORITY["EPSG","4326"]]"""
+
