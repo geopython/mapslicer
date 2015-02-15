@@ -83,7 +83,7 @@ class MainFrame(wx.Frame):
 			icon = wx.Icon( sys.executable, wx.BITMAP_TYPE_ICO )
 			self.SetIcon( icon )
 		if sys.platform.startswith('linux'):
-			self.SetIcon( icons.getIconIcon() )
+			self.SetIcon( icons.getApplicationIcon() )
 		self.SetBackgroundColour(wx.Colour(253, 253, 253))
 		for label in self.steplabel[1:]:
 			label.Enable(False)
