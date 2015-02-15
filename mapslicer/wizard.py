@@ -12,6 +12,9 @@ import icons
 
 from wxgdal2tiles import wxGDAL2Tiles
 
+# TODO: GetText
+_ = lambda s: s
+
 class WizardHtmlWindow(wx.html.HtmlWindow):
 	def __init__(self, parent, id, pos=wx.DefaultPosition, size = wx.DefaultSize ):
 		wx.html.HtmlWindow.__init__(self, parent, id, pos=pos, size=size, style=(wx.html.HW_NO_SELECTION |  wx.FULL_REPAINT_ON_RESIZE) )

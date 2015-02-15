@@ -15,6 +15,9 @@ import icons
 
 import gdalpreprocess
 
+# TODO: GetText
+_ = lambda s: s
+
 class FileDrop(wx.FileDropTarget):
 
 	def __init__(self, target):

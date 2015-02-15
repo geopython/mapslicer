@@ -14,6 +14,9 @@ import gdalpreprocess
 
 import wxgdal2tiles as wxgdal
 
+# TODO: GetText
+_ = lambda s: s
+
 GENERIC_GUI_EVENT = wx.NewEventType()
 EVT_GENERIC_GUI = wx.PyEventBinder(GENERIC_GUI_EVENT, 0)
 

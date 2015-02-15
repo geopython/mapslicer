@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import os, sys
-import gettext
+#import gettext
 
-gettext.install("mapslicer", "./resources/")
-csText = gettext.translation("mapslicer", "./resources/", languages=['cs'])
-deText = gettext.translation("mapslicer", "./resources/", languages=['de'])
-#deText.install()
+#gettext.install("mapslicer", "./resources/")
+#csText = gettext.translation("mapslicer", "./resources/", languages=['cs'])
+#deText = gettext.translation("mapslicer", "./resources/", languages=['de'])
+##deText.install()
 
 # Where is the executable file on the disk?
 exepath = os.getcwd()
@@ -79,7 +79,8 @@ class MapSlicerApp(wx.App):
 
 if __name__ == "__main__":
 
-	_ = gettext.gettext
+	#_ = gettext.gettext
+	_ = lambda s: s
 
 	# TODO: Parse command line arguments:
 	# for both batch processing and initialization of the GUI

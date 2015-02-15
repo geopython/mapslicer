@@ -1,4 +1,4 @@
-import gettext
+#import gettext
 
 version = "1.0 rc1"
 
@@ -27,7 +27,8 @@ documentsdir = ""
 bboxgeoref = False
 
 # GetText
-_ = gettext.gettext
+#_ = gettext.gettext
+_ = lambda s: s
 
 # WellKnownGeogCS
 wellknowngeogcs = ['WGS84','WGS72','NAD27','NAD83']
