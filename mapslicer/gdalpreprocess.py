@@ -6,8 +6,6 @@ import tempfile
 import os
 import preprocess
 
-#TODO: GetText
-from config import _
 
 gdal.AllRegister()
 vrt_drv = gdal.GetDriverByName( 'VRT' )
@@ -33,7 +31,7 @@ def singlefile(filename, bbox = None):
 	in_ds = gdal.Open( filename, gdal.GA_ReadOnly)
 	if not in_ds:
 		# Note: GDAL prints the ERROR message too
-		raise PreprocessError(_("It is not possible to open the input file '%s'.") % filename)
+		raise PreprocessError("It is not possible to open the input file '%s'." % filename)
 
 	xsize = in_ds.RasterXSize
 	ysize = in_ds.RasterYSize
@@ -98,10 +96,11 @@ def SRSInput(srs):
 	osr.UseExceptions()
 	reference.SetFromUserInput(srs)
 	return reference.ExportToPrettyWkt()
-	
+
 if __name__=='__main__':
 	import sys
 	if len(sys.argv) > 1:
 		print singlefile(sys.argv[1])
 	else:
 		print "Specify a single file to preprocess"
+

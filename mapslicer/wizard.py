@@ -10,6 +10,8 @@ import webbrowser
 import config
 import icons
 
+_ = lambda s: s
+
 from wxgdal2tiles import wxGDAL2Tiles
 
 class WizardHtmlWindow(wx.html.HtmlWindow):

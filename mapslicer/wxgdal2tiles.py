@@ -7,8 +7,6 @@ from Queue import Empty
 
 from gdal2tiles import GDAL2Tiles
 
-# TODO: GetText
-from config import _
 
 UPDATE_PROGRESS_EVENT = wx.NewEventType()
 EVT_UPDATE_PROGRESS = wx.PyEventBinder(UPDATE_PROGRESS_EVENT, 0)

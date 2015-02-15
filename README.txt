@@ -38,7 +38,7 @@ Sponsors of MapTiler/GDAL2Tiles:
 
 	* http://www.davidrumsey.com - supported improvement of Google Earth SuperOverlay rendering
 	* http://www.nic.cz/ and http://www.nic.cz/vip/ - Vyvíjej, Inovuj, Programuj
-	* http://www.brgm.fr/ (Bureau des Recherches Geologiques et Minières - French Geological Survey Office
+	* http://www.brgm.fr/ - Bureau des Recherches Geologiques et Minières - French Geological Survey Office
 	* http://www.oldmapsonline.org/ - Moravian Library Brno, Czech Ministry of Culture
 	* http://code.google.com/soc/ - Google Summer of Code 2007, 2008 (GDAL2Tiles utility) - OSGeo and Google Inc.
 
