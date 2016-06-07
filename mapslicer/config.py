@@ -1,6 +1,6 @@
 #import gettext
 
-version = "1.0 rc1"
+version = "1.0 rc2"
 
 profile = 'mercator'
 files = []

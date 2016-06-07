@@ -15,5 +15,5 @@ cp deploy/linux/mapslicer.desktop /usr/share/applications/
 mkdir -p /usr/share/mapslicer
 cp resources/icon.png /usr/share/mapslicer/
 
-fpm -s dir -t deb -a all -n mapslicer -v 1.0.rc1 --description='Map Tile Generator for Mashups' -d python-gdal -d python-wxgtk2.8 -d python /usr/share/doc/mapslicer/ /usr/lib/mapslicer/ /usr/share/mapslicer/icon.png /usr/share/applications/mapslicer.desktop
+fpm -s dir -t deb -a all -n mapslicer -v 1.0.rc2 --description='Map Tile Generator for Mashups' -d python-gdal -d python-wxgtk3.0 -d python /usr/share/doc/mapslicer/ /usr/lib/mapslicer/ /usr/share/mapslicer/icon.png /usr/share/applications/mapslicer.desktop
 
